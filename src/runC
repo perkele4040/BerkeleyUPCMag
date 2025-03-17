@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Check if argument is provided
+if [ -z "$2" ] || [ -z "$1" ]; then
+    echo "Usage: $0 <subdirectory_with_file> <filename_without_extension>"
+    exit 1
+fi
+
+# Set the filename from the argument
+FILENAME="$2"
+cd $1
+# Compile the C file
+gcc -o "$FILENAME.exe" "$FILENAME.c"
+if [ $? -ne 0 ]; then
+    echo "Compilation failed."
+    exit 1
+fi
+
+# Run the compiled executable
+./"$FILENAME.exe"

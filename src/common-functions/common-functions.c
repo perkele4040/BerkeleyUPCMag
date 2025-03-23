@@ -1,5 +1,6 @@
-//#include "C:\Users\kobyl\Desktop\studia\magister\GIT\BerkeleyUPCMag\src\common-functions\common-functions.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 
 extern void printArray(int arr[], int size){
     int i;

@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
 //Funkcja printArray wypisuje w konsoli w jednej linii podaną tabelę liczb całkowitych.
 int printArray(int arr[], int size);
 

@@ -1,6 +1,4 @@
-#include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include "../common-functions/common-functions.h"
 
 //Algorytm

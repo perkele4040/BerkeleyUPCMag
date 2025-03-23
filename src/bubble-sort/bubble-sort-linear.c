@@ -110,7 +110,7 @@ int main(){
     printf("size of array = %d\n", size);
     bubbleSort(numbers, size);
     printArray(numbers, size);
-    printf("did bubble sort work? = %d\n", validateSortingOutput(numbers, size));
+    printf("did bubble sort work?  = %d\n", validateSortingOutput(numbers, size));
     writeArrayToOutputFile(filenameOutput, &size, numbers);
     return 0;
 }

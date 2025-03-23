@@ -2,15 +2,6 @@
 #include <stdio.h>
 #include "../common-functions/common-functions.h"
 
-
-
-//move to lib??
-void swap(int* a, int* b) {
-    int temp = *a;
-    *a = *b;
-    *b = temp;
-}
-
 int partition(int arr[], int low, int high) {
 
     // Initialize pivot to be the first element
@@ -32,10 +23,10 @@ int partition(int arr[], int low, int high) {
             j--;
         }
         if (i < j) {
-            swap(&arr[i], &arr[j]);
+            swapInt(&arr[i], &arr[j]);
         }
     }
-    swap(&arr[low], &arr[j]);
+    swapInt(&arr[low], &arr[j]);
     return j;
 }
 
@@ -53,13 +44,17 @@ void quickSort(int arr[], int low, int high) {
 }
 
 int main() {
-  
-    int arr[] = { 4, 2, 5, 3, 1 };
-    int n = sizeof(arr) / sizeof(arr[0]);
-    printArray(arr, n);
+    const char* filenameInput = "quick-sort-test-input.txt";
+    const char* filenameOutput = "quick-sort-test-output.txt";
+    int size;
+    int* numbers = loadArrayFromFile(filenameInput, &size);
+    //int arr[] = { 4, 2, 5, 3, 1 };
+    //int n = sizeof(arr) / sizeof(arr[0]);
+    //printArray(numbers, size);
     // calling quickSort() to sort the given array
-    //quickSort(arr, 0, n - 1);
-
+    quickSort(numbers, 0, size - 1);
+    printArray(numbers, size);
+    writeArrayToOutputFile(filenameOutput, &size, numbers);
     //for (int i = 0; i < n; i++)
     //    printf("%d ", arr[i]);
 

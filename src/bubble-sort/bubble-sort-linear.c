@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include "../common-functions/common-functions.h"
 
-
-
 //Algorytm
 void bubbleSort(int arr[], int n){
     int i, j;
@@ -24,7 +22,6 @@ void bubbleSort(int arr[], int n){
             break;
     }
 }
-
 
 int main(){
 

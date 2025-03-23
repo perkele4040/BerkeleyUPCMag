@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "../common-functions/common-functions.h"
 
 
 //move to lib??
@@ -41,12 +42,6 @@ bool validateSortingOutput(int arr[], int size) {
     return true;
 }
 
-//Funkcja printArray wypisuje w konsoli w jednej linii podaną tabelę liczb całkowitych.
-void printArray(int arr[], int size){
-    int i;
-    for (i = 0; i < size; i++)
-        printf("%d, ", arr[i]);
-}
 
 //Funkcja writeArrayToOutputFile przyjmuje wskaźnik do pliku .txt oraz tabelę liczb całkowitych i jej rozmiar.
 //Funkcja zapisuje liczby do podanego pliku w nowych liniach oraz zwraca błąd w przypadku nieodnalezienia pliku.

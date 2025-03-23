@@ -1,6 +1,7 @@
 // C program to implement Quick Sort Algorithm
 #include <stdio.h>
-#include "src/common-func/read-write-file.c"
+#include "../common-functions/common-functions.h"
+
 
 
 //move to lib??

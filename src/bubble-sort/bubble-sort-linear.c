@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+//move to lib??
 void swap(int* xp, int* yp){
     int temp = *xp;
     *xp = *yp;
@@ -50,7 +52,6 @@ void printArray(int arr[], int size){
 //Funkcja zapisuje liczby do podanego pliku w nowych liniach oraz zwraca błąd w przypadku nieodnalezienia pliku.
 void writeArrayToOutputFile(const char* filename, int* size, int arr[]) {
     FILE* file = fopen(filename, "w");
-    printf("size within write function = %d\n", *size);
     if (!file) {
         perror("Error opening output file");
     }

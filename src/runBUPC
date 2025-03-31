@@ -11,7 +11,7 @@ FILENAME="$2"
 cd $1
 # Compile the C file
 #gcc -o "$FILENAME.exe" "$FILENAME.c" ../common-functions/common-functions.c
-~/BUPC/upcc-build/upcc -T $3 -o "$FILENAME.exe" "$FILENAME.c"
+~/BUPC/upcc-build/upcc -T $3 -o "$FILENAME.exe" "$FILENAME.c" ../common-functions/common-functions.c
 if [ $? -ne 0 ]; then
     echo "Compilation failed."
     exit 1

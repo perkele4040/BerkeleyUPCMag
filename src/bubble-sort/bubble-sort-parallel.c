@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <upc.h>
 #include "../common-functions/common-functions.h"
-#define THREADS 3
 #define SIZE 100
 
 

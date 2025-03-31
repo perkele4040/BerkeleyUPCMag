@@ -52,7 +52,7 @@ int main(){
         printf("Hey Geek it seems that you"
             "are working on a Linux OS.\n"); 
     
-    #elif __unix__ 
+    #else 
         printf("Hey Geek it seems that you"
             "are working on a unix OS.\n"); 
  

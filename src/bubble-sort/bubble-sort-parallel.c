@@ -16,6 +16,7 @@ void parallelBubbleSort(int arr[], int N) {
 
         // Odd phase: swap adjacent elements in pairs
         if (phase % 2 == 0) {
+            printf("Watek %d tu byl\n", MYTHREAD)
             for (int i = start; i < end - 1; i += 2) {
                 if (arr[i] > arr[i + 1]) {
                     swapInt(&arr[i], &arr[i + 1]);

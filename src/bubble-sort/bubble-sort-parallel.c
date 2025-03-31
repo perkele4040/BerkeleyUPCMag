@@ -44,17 +44,6 @@ void parallelBubbleSort(int arr[], int N) {
 }
 
 int main(){
-    #ifdef _WIN32 
-    printf("Hey Geek it seems that"
-           "you are working on a Windows OS.\n"); 
-  
-    #elif __linux__ 
-        printf("Hey Geek it seems that you"
-            "are working on a Linux OS.\n"); 
-    
-    #else 
-        printf("Hey Geek it seems that you"
-            "are working on a unix OS.\n"); 
  
     const char* filenameInput = "bubble-sort-test-input.txt";
     const char* filenameOutput = "bubble-sort-test-output.txt";

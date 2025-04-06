@@ -41,11 +41,13 @@ int main(){
         int size = SIZE;
         int* arr = loadArrayFromFile(filenameInput, &size);
         printf("Starting array: \n");
-        printArray(arr, SIZE); }
+        for (int i = 0; i < SIZE; i++)
+            printf("%d, ", arr[i]); }
     parallelBubbleSort();
     if(MYTHREAD==0) {
         printf("Outcome array: \n");
-        printArray(&arr, SIZE);
+        for (int i = 0; i < SIZE; i++)
+            printf("%d, ", arr[i]);
         printf("did bubble sort work?  = %d\n", validateSortingOutput(arr, size));
         writeArrayToOutputFile(filenameOutput, &size, arr); }
     return 0;

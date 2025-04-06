@@ -8,12 +8,12 @@ shared bool swapped;
 
 
 
-void bubbleSort(int arr[], int n){
+void bubbleSort(int arr[], int n) {
     printf("Thread %d entering sort function\n", MYTHREAD);
     int i, j;
     for (i = 0; i < n - 1; i++) {
         swapped = false;
-        upc_forall (j = 0; j < n - i - 1; j++) {
+        upc_forall(j = 0; j < n - i - 1; j++; j) {
             if (arr[j] > arr[j + 1]) {
                 swapInt(&arr[j], &arr[j + 1]);
                 swapped = true;

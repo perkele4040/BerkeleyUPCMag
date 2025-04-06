@@ -30,18 +30,18 @@ void parallelBubbleSort(int arr[], int n) {
 
 int main(){
     if(MYTHREAD==0) {
-        printf("Using %d threads\n", THREADS); }
-    const char* filenameInput = "bubble-sort-test-input.txt";
-    const char* filenameOutput = "bubble-sort-test-output.txt";
-    int size;
-    int* arr = loadArrayFromFile(filenameInput, &size);
-    printf("Starting array: \n");
-    printArray(arr, SIZE);
-    //printf("size of array = %d\n", size);
-    parallelBubbleSort(arr, SIZE);
-    printf("Outcome array: \n");
-    printArray(arr, SIZE);
-    printf("did bubble sort work?  = %d\n", validateSortingOutput(arr, size));
-    writeArrayToOutputFile(filenameOutput, &size, arr);
+        printf("Using %d threads\n", THREADS); 
+        const char* filenameInput = "bubble-sort-test-input.txt";
+        const char* filenameOutput = "bubble-sort-test-output.txt";
+        int size;
+        int* arr = loadArrayFromFile(filenameInput, &size);
+        printf("Starting array: \n");
+        printArray(arr, SIZE);
+        //printf("size of array = %d\n", size);
+        parallelBubbleSort(arr, SIZE);
+        printf("Outcome array: \n");
+        printArray(arr, SIZE);
+        printf("did bubble sort work?  = %d\n", validateSortingOutput(arr, size));
+        writeArrayToOutputFile(filenameOutput, &size, arr); }
     return 0;
 }

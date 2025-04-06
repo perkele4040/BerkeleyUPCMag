@@ -4,7 +4,7 @@
 //#include "../common-functions/common-functions.h"
 #define SIZE 100
 shared [THREADS] double arr[SIZE];
-shared bool swapped;
+shared int swapped;
 
 
 
@@ -12,17 +12,17 @@ void parallelBubbleSort() {
     printf("Thread %d entering sort function\n", MYTHREAD);
     int i, j;
     for (i = 0; i < SIZE - 1; i++) {
-        swapped = false;
+        swapped = 0;
         upc_forall(j = 0; j < SIZE - i - 1; j++; j) {
             if (arr[j] > arr[j + 1]) {
                 swapInt(&arr[j], &arr[j + 1]);
-                swapped = true;
+                swapped = 1;
             }
         }
 
         // If no two elements were swapped by inner loop,
         // then break
-        if (swapped == false)
+        if (swapped == 1)
             break;
     }
 }

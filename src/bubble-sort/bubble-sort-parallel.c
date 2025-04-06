@@ -52,8 +52,11 @@ int main(){
     const char* filenameOutput = "bubble-sort-test-output.txt";
     int size;
     int* numbers = loadArrayFromFile(filenameInput, &size);
-    printf("size of array = %d\n", size);
+    printf("Starting array: \n");
+    printArray(numbers, SIZE);
+    //printf("size of array = %d\n", size);
     parallelBubbleSort(numbers, SIZE);
+    printf("Outcome array: \n");
     printArray(numbers, SIZE);
     printf("did bubble sort work?  = %d\n", validateSortingOutput(numbers, size));
     writeArrayToOutputFile(filenameOutput, &size, numbers);

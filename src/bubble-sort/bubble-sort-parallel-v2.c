@@ -8,12 +8,12 @@ shared bool swapped;
 
 
 
-void parallelBubbleSort(int arr[], int n) {
+void parallelBubbleSort() {
     printf("Thread %d entering sort function\n", MYTHREAD);
     int i, j;
-    for (i = 0; i < n - 1; i++) {
+    for (i = 0; i < SIZE - 1; i++) {
         swapped = false;
-        upc_forall(j = 0; j < n - i - 1; j++; j) {
+        upc_forall(j = 0; j < SIZE - i - 1; j++; j) {
             if (arr[j] > arr[j + 1]) {
                 swapInt(&arr[j], &arr[j + 1]);
                 swapped = true;
@@ -33,14 +33,14 @@ int main(){
         printf("Using %d threads\n", THREADS); 
         const char* filenameInput = "bubble-sort-test-input.txt";
         const char* filenameOutput = "bubble-sort-test-output.txt";
-        int size;
+        int size = SIZE;
         int* arr = loadArrayFromFile(filenameInput, &size);
         printf("Starting array: \n");
-        printArray(arr, SIZE); }
-    parallelBubbleSort(arr, SIZE);
+        printArray(&arr, SIZE); }
+    parallelBubbleSort();
     if(MYTHREAD==0) {
         printf("Outcome array: \n");
-        printArray(arr, SIZE);
+        printArray(&arr, SIZE);
         printf("did bubble sort work?  = %d\n", validateSortingOutput(arr, size));
         writeArrayToOutputFile(filenameOutput, &size, arr); }
     return 0;

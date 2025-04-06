@@ -29,10 +29,11 @@ void parallelBubbleSort() {
 
 int main(){
     const int* size = SIZE;
+    const char* filenameInput = "bubble-sort-test-input.txt";
+    const char* filenameOutput = "bubble-sort-test-output.txt";
     if(MYTHREAD==0) {
         printf("Using %d threads\n", THREADS); 
-        const char* filenameInput = "bubble-sort-test-input.txt";
-        const char* filenameOutput = "bubble-sort-test-output.txt";
+        
         
         int* arr = loadArrayFromFile(filenameInput, &size);
         printf("Starting array: \n");

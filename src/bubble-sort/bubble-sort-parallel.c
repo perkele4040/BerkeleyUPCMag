@@ -7,6 +7,7 @@
 
 //Algorytm
 void parallelBubbleSort(int arr[], int N) {
+    printf("Thread %d entering sort function\n", MYTHREAD);
     int localSize = N / THREADS;
     int start = MYTHREAD * localSize;
     int end = start + localSize;
@@ -16,7 +17,7 @@ void parallelBubbleSort(int arr[], int N) {
 
         // Odd phase: swap adjacent elements in pairs
         if (phase % 2 == 0) {
-            printf("Watek %d tu byl\n", MYTHREAD);
+            //printf("Watek %d tu byl\n", MYTHREAD);
             for (int i = start; i < end - 1; i += 2) {
                 if (arr[i] > arr[i + 1]) {
                     swapInt(&arr[i], &arr[i + 1]);
@@ -45,7 +46,8 @@ void parallelBubbleSort(int arr[], int N) {
 }
 
 int main(){
- 
+    if(MYTHREAD==0) {
+        printf("Using %d threads\n", THREADS); }
     const char* filenameInput = "bubble-sort-test-input.txt";
     const char* filenameOutput = "bubble-sort-test-output.txt";
     int size;

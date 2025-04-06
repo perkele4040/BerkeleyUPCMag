@@ -32,7 +32,7 @@ int main(){
         printf("Using %d threads\n", THREADS); 
         const char* filenameInput = "bubble-sort-test-input.txt";
         const char* filenameOutput = "bubble-sort-test-output.txt";
-        int size = SIZE;
+        const int* size = SIZE;
         int* arr = loadArrayFromFile(filenameInput, &size);
         printf("Starting array: \n");
         for (int i = 0; i < SIZE; i++)
@@ -42,7 +42,7 @@ int main(){
         printf("Outcome array: \n");
         for (int i = 0; i < SIZE; i++)
             printf("%d, ", arr[i]);
-        printf("did bubble sort work?  = %d\n", validateSortingOutput(arr, size));
+        printf("did bubble sort work?  = %d\n", validateSortingOutput(arr, &size));
         writeArrayToOutputFile(filenameOutput, &size, arr); }
     return 0;
 }

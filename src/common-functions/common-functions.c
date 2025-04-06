@@ -14,8 +14,8 @@ void swapInt(int* xp, int* yp){
     *yp = temp;
 }
 
-bool validateSortingOutput(int arr[], int size) {
-    for (int i = 1; i < size; i++){
+bool validateSortingOutput(int arr[], int* size) {
+    for (int i = 1; i < *size; i++){
         if(arr[i]<arr[i-1])
         return false;
     }

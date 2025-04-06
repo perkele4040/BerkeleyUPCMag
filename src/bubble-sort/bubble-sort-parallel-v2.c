@@ -8,7 +8,7 @@ shared bool swapped;
 
 
 
-void bubbleSort(int arr[], int n) {
+void parallelBubbleSort(int arr[], int n) {
     printf("Thread %d entering sort function\n", MYTHREAD);
     int i, j;
     for (i = 0; i < n - 1; i++) {

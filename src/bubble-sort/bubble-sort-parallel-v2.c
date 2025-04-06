@@ -27,6 +27,11 @@ void parallelBubbleSort() {
     }
 }
 
+void printArray(int arr[], int size){
+    int i;
+    for (i = 0; i < size; i++)
+        printf("%d, ", arr[i]);
+}
 
 int main(){
     if(MYTHREAD==0) {
@@ -36,7 +41,7 @@ int main(){
         int size = SIZE;
         int* arr = loadArrayFromFile(filenameInput, &size);
         printf("Starting array: \n");
-        printArray(&arr, SIZE); }
+        printArray(arr, SIZE); }
     parallelBubbleSort();
     if(MYTHREAD==0) {
         printf("Outcome array: \n");

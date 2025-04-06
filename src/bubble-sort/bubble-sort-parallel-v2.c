@@ -1,7 +1,7 @@
 #include <upc_relaxed.h>
 #include <stdio.h>
 #include <upc.h>
-#include "../common-functions/common-functions.h"
+//#include "../common-functions/common-functions.h"
 #define SIZE 100
 shared [THREADS] double arr[SIZE];
 shared bool swapped;
@@ -25,12 +25,6 @@ void parallelBubbleSort() {
         if (swapped == false)
             break;
     }
-}
-
-void printArray(int arr[], int size){
-    int i;
-    for (i = 0; i < size; i++)
-        printf("%d, ", arr[i]);
 }
 
 int main(){

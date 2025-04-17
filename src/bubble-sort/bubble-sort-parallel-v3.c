@@ -65,6 +65,7 @@ int main() {
          }
       }
    }
+   upc_barrier;
    if ( MYTHREAD == 0 ) {
       printf("array after sorting chunks but before merge");
       for(int i = 0; i < SIZE; i++)

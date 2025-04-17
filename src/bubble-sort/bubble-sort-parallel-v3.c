@@ -10,7 +10,7 @@
 //#define MYTHREAD 0
 #define MAX 100
 #define MIN 0
-shared [THREADS] double arr[SIZE];
+shared [THREADS] int arr[SIZE];
 shared int elems_per_threads;
 
 void swapIntLocal(int* xp, int* yp){

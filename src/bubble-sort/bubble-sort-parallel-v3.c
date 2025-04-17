@@ -1,23 +1,25 @@
-//#include <upc_relaxed.h>
+#include <upc_relaxed.h>
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
 #include <stdbool.h>
-//#include <upc.h>
+#include <upc.h>
 #define SIZE 10
-#define THREADS 1
-#define MYTHREAD 0
+//#define THREADS 3
+//#define MYTHREAD 0
 #define MAX 100
 #define MIN 0
-//shared [THREADS] double arr[SIZE];
+shared [THREADS] double arr[SIZE];
+shared int elems_per_thread;
 
 void swapIntLocal(int* xp, int* yp){
    int temp = *xp;
    *xp = *yp;
    *yp = temp;
 }
-
+//wszystko na jednej dzielonej tabeli, minimalna ilość komunikacji międzyprocesorowej
+//maksymalne użycie pamięci wspólnej
 int main() {
     /*
     1. losuj zawartosc tabeli
@@ -26,30 +28,75 @@ int main() {
     4. polacz tabele jednym przejsciem
     */
    //int arr[SIZE];
-   int* arr = (int*)malloc(SIZE * sizeof(int));
-   srand(time(NULL));
-   for(int i = 0; i < SIZE; i++)
-      arr[i] = rand() % (MAX - MIN + 1) + MIN;
-   //for(int i = 0; i < SIZE; i++)
-   //   printf("%d, ", arr[i]);
-   int elems_per_threads = ceil ((double)SIZE/THREADS);
-   //printf("elems per thread = %d\n", elems_per_threads);
+   //1. LOSOWANIE
+   //tylko main
+   //int* arr = (int*)malloc(SIZE * sizeof(int));
+   //int* sorted = (int*)malloc(SIZE * sizeof(int));
+   if ( MYTHREAD == 0 ) {
+      srand(time(NULL));
+      for(int i = 0; i < SIZE; i++)
+         arr[i] = rand() % (MAX - MIN + 1) + MIN;
+      elems_per_threads = ceil ((double)SIZE/THREADS);
+      printf("array before sorting:\n");
+      for(int i = 0; i < SIZE; i++)
+         printf("%d, ", arr[i]);
+      printf("elems per thread = %d\n", elems_per_threads);
+   }
+
+   
+
+   //ILOŚĆ ELEMENTÓW NA WĄTEK
+   //shared variable?
+   
+   
+   
+   //local variable
    bool swapped;
-   for( int i = MYTHREAD*elems_per_threads; i < (MYTHREAD+1)*elems_per_threads-1; i++ ) {
+   printf("thread 0 sorting from %d to %d\n", MYTHREAD*elems_per_threads, (MYTHREAD+1)*elems_per_threads);
+   //tyle inkrementacji i ile elementów ma przetworzyć wątek
+   for( int i = 0; i < elems_per_threads; i++ ) {
       swapped = false;
-      printf("i=%d\n", i);
+      //tyle inkrementacji j ile elementów pozostało nieprzetworzonych
+      //od początku do końca zakresu przydzielonego wątkowi
       for( int j = MYTHREAD*elems_per_threads; j < (MYTHREAD+1)*elems_per_threads-i-1; j++ ) {
-         printf("checking %d and %d\n", arr[j], arr[j+1]);
          if( arr[j] > arr[j+1] ) {
             swapIntLocal(&arr[j], &arr[j + 1]);
             swapped=true;
-            printf("swapped\n");
          }
-         for(int i = 0; i < SIZE; i++)
-            printf("%d, ", arr[i]);
-         printf("\n");
       }
    }
-   for(int i = 0; i < SIZE; i++)
-      printf("%d, ", arr[i]);
+   if ( MYTHREAD == 0 ) {
+      printf("array after sorting chunks but before merge");
+      for(int i = 0; i < SIZE; i++)
+         printf("%d, ", arr[i]);
+   }
+   /*
+   //MERGE
+   //i j mogą być elementami tabeli o długości równej ilości wątków
+   int i = 0, j = elems_per_threads, z = 2*elems_per_threads, k = 0;
+   // One pass through both arrays
+   while (i < elems_per_threads && j < 2*elems_per_threads && z < 3*elems_per_threads && k < SIZE) {
+      if (arr[i] <= arr[j]) {
+          sorted[k++] = arr[i++];
+      } else {
+          sorted[k++] = arr[j++];
+      }
+  }
+
+  // Copy any remaining elements from a[]
+  while (i < elems_per_threads && k < SIZE) {
+   sorted[k++] = arr[i++];
+  }
+
+  // Copy any remaining elements from b[]
+  while (j < 2*elems_per_threads && k < SIZE) {
+   sorted[k++] = arr[j++];
+  }
+  while (z < 3*elems_per_threads && k < SIZE) {
+   sorted[k++] = arr[z++];
+  }
+  printf("\narrays were merged\n");
+  for(int i = 0; i < SIZE; i++)
+      printf("%d, ", sorted[i]);
+   */
 }

@@ -58,6 +58,8 @@ int main() {
       swapped = false;
       //tyle inkrementacji j ile elementów pozostało nieprzetworzonych
       //od początku do końca zakresu przydzielonego wątkowi
+      for(int i = 0; i < SIZE; i++)
+         printf("%d, ", arr[i]);
       for( int j = MYTHREAD*elems_per_threads; j < (MYTHREAD+1)*elems_per_threads-i-1; j++ ) {
          if( arr[j] > arr[j+1] ) {
             swapIntLocal(&arr[j], &arr[j + 1]);

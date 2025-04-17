@@ -40,7 +40,7 @@ int main() {
       printf("array before sorting:\n");
       for(int i = 0; i < SIZE; i++)
          printf("%d, ", arr[i]);
-      printf("elems per thread = %d\n", elems_per_threads);
+      printf("elems per thread = %d\n\n", elems_per_threads);
    }
 
    upc_barrier;
@@ -52,7 +52,7 @@ int main() {
    
    //local variable
    bool swapped;
-   printf("thread 0 sorting from %d to %d\n", MYTHREAD*elems_per_threads, (MYTHREAD+1)*elems_per_threads);
+   printf("thread 0 sorting from %d to %d\n\n", MYTHREAD*elems_per_threads, (MYTHREAD+1)*elems_per_threads);
    //tyle inkrementacji i ile elementów ma przetworzyć wątek
    for( int i = 0; i < elems_per_threads; i++ ) {
       swapped = false;
@@ -60,6 +60,7 @@ int main() {
       //od początku do końca zakresu przydzielonego wątkowi
       for(int i = 0; i < SIZE; i++)
          printf("%d, ", arr[i]);
+      printf("\n");
       for( int j = MYTHREAD*elems_per_threads; j < (MYTHREAD+1)*elems_per_threads-i-1; j++ ) {
          if( arr[j] > arr[j+1] ) {
             swapIntLocal(&arr[j], &arr[j + 1]);
@@ -69,7 +70,7 @@ int main() {
    }
    upc_barrier;
    if ( MYTHREAD == 0 ) {
-      printf("array after sorting chunks but before merge");
+      printf("\n\narray after sorting chunks but before merge");
       for(int i = 0; i < SIZE; i++)
          printf("%d, ", arr[i]);
    }

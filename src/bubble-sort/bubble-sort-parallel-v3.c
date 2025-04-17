@@ -68,6 +68,11 @@ int main() {
       for(int i = 0; i < SIZE; i++)
          printf("%d, ", arr[i]);
    }
+   if ( MYTHREAD == 1 ) {
+      printf("\n\narray after sorting chunks but before merge\n");
+      for(int i = 0; i < SIZE; i++)
+         printf("%d, ", arr[i]);
+   }
    /*
    //MERGE
    //i j mogą być elementami tabeli o długości równej ilości wątków

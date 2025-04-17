@@ -43,7 +43,7 @@ int main() {
       printf("elems per thread = %d\n", elems_per_threads);
    }
 
-   
+   upc_barrier();
 
    //ILOŚĆ ELEMENTÓW NA WĄTEK
    //shared variable?

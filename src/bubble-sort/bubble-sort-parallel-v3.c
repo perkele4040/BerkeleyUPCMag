@@ -74,7 +74,22 @@ int main() {
       for(int i = 0; i < SIZE; i++)
          printf("%d, ", arr[i]);
    }
-
+   if(MYTHREAD==0) {
+      int i=0, j=elems_per_threads, k=0;
+      while (i < elems_per_threads && j < 2*elems_per_threads && k < SIZE) {
+         if (arr[i] <= arr[j]) {
+             sorted[k++] = arr[i++];
+         } else {
+             sorted[k++] = arr[j++];
+         }
+      }
+      while (i < elems_per_threads && k < SIZE) {
+         sorted[k++] = arr[i++];
+         }
+      while (j < 2*elems_per_threads && k < SIZE) {
+         sorted[k++] = arr[j++];
+         }
+   }
    /*
    //MERGE
    //i j mogą być elementami tabeli o długości równej ilości wątków

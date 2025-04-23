@@ -75,7 +75,7 @@ int main() {
          printf("%d, ", arr[i]);
    }
    if(MYTHREAD==0) {
-      shared int sorted[SIZE];
+      int sorted[SIZE];
       int i=0, j=elems_per_threads, k=0;
       while (i < elems_per_threads && j < 2*elems_per_threads && k < SIZE) {
          if (arr[i] <= arr[j]) {

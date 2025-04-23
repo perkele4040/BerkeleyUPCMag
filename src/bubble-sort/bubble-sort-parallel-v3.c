@@ -75,6 +75,7 @@ int main() {
          printf("%d, ", arr[i]);
    }
    if(MYTHREAD==0) {
+      shared int sorted[SIZE];
       int i=0, j=elems_per_threads, k=0;
       while (i < elems_per_threads && j < 2*elems_per_threads && k < SIZE) {
          if (arr[i] <= arr[j]) {
@@ -89,6 +90,9 @@ int main() {
       while (j < 2*elems_per_threads && k < SIZE) {
          sorted[k++] = arr[j++];
          }
+      printf("\n\narray after merge\n");
+      for(int i = 0; i < SIZE; i++)
+         printf("%d, ", arr[i]);
    }
    /*
    //MERGE

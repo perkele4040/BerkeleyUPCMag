@@ -47,23 +47,24 @@ int main() {
 
    //ILOŚĆ ELEMENTÓW NA WĄTEK
    //shared variable?
-   
+   if(MYTHREAD==0) {
    printf("thread 0 sorting from %d to %d\n\n", MYTHREAD*elems_per_threads, (MYTHREAD+1)*elems_per_threads);
    //tyle inkrementacji i ile elementów ma przetworzyć wątek
    for( int i = 0; i < elems_per_threads; i++ ) {
       //tyle inkrementacji j ile elementów pozostało nieprzetworzonych
       //od początku do końca zakresu przydzielonego wątkowi
-      for(int i = 0; i < SIZE; i++)
-         printf("%d, ", arr[i]);
-      printf("\n");
+      
       for( int j = MYTHREAD*elems_per_threads; j < (MYTHREAD+1)*elems_per_threads-i-1; j++ ) {
+         for(int i = 0; i < SIZE; i++)
+            printf("%d, ", arr[i]);
+         printf("\n");
          printf("comparing %d with %d\n", arr[j], arr[j+1]);
          if( arr[j] > arr[j+1] ) {
             printf("swapped\n");
             swapIntLocal(&arr[j], &arr[j + 1]);
          }
       }
-   }
+   } }
    upc_barrier;
    if ( MYTHREAD == 0 ) {
       printf("\n\narray after sorting chunks but before merge\n");

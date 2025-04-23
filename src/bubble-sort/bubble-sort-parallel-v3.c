@@ -13,11 +13,7 @@
 shared [THREADS] int arr[SIZE];
 shared int elems_per_threads;
 
-void swapIntLocal(int* xp, int* yp){
-   int temp = *xp;
-   *xp = *yp;
-   *yp = temp;
-}
+//ZROBIC REFACTORING NA 4 WATKI PO ROZSZERZENIU MASZYNY
 //wszystko na jednej dzielonej tabeli, minimalna ilość komunikacji międzyprocesorowej
 //maksymalne użycie pamięci wspólnej
 int main() {

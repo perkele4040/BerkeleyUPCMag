@@ -57,7 +57,9 @@ int main() {
          printf("%d, ", arr[i]);
       printf("\n");
       for( int j = MYTHREAD*elems_per_threads; j < (MYTHREAD+1)*elems_per_threads-i-1; j++ ) {
+         printf("comparing %d with %d\n", arr[j], arr[j+1]);
          if( arr[j] > arr[j+1] ) {
+            printf("swapped\n");
             swapIntLocal(&arr[j], &arr[j + 1]);
          }
       }
@@ -68,11 +70,7 @@ int main() {
       for(int i = 0; i < SIZE; i++)
          printf("%d, ", arr[i]);
    }
-   if ( MYTHREAD == 1 ) {
-      printf("\n\narray after sorting chunks but before merge\n");
-      for(int i = 0; i < SIZE; i++)
-         printf("%d, ", arr[i]);
-   }
+
    /*
    //MERGE
    //i j mogą być elementami tabeli o długości równej ilości wątków

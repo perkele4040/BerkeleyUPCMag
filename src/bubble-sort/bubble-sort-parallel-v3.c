@@ -48,6 +48,7 @@ int main() {
    //ILOŚĆ ELEMENTÓW NA WĄTEK
    //shared variable?
    if(MYTHREAD==0) {
+      int temp=0;
    printf("thread 0 sorting from %d to %d\n\n", MYTHREAD*elems_per_threads, (MYTHREAD+1)*elems_per_threads);
    //tyle inkrementacji i ile elementów ma przetworzyć wątek
    for( int i = 0; i < elems_per_threads; i++ ) {
@@ -61,7 +62,10 @@ int main() {
          printf("comparing %d with %d\n", arr[j], arr[j+1]);
          if( arr[j] > arr[j+1] ) {
             printf("swapped\n");
-            swapIntLocal(&arr[j], &arr[j + 1]);
+            temp=arr[j];
+            arr[j]=arr[j+1];
+            arr[j+1]=arr[j];
+            //swapIntLocal(&arr[j], &arr[j + 1]);
          }
       }
    } }

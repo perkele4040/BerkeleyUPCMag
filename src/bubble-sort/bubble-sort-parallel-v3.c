@@ -92,7 +92,7 @@ int main() {
          }
       printf("\n\narray after merge\n");
       for(int i = 0; i < SIZE; i++)
-         printf("%d, ", arr[i]);
+         printf("%d, ", sorted[i]);
    }
    /*
    //MERGE

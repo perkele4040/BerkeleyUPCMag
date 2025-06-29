@@ -87,9 +87,9 @@ void genetic_algorithm() {
     int end = start + pop_per_thread;
 
     // Initialize population
-    for (int i = start; i < end; i++) {
+    for (int i = start; i < end; i++)
         init_individual(&population[i]);
-    }
+    
 
     upc_barrier;
     
@@ -118,22 +118,23 @@ void genetic_algorithm() {
             }
             upc_unlock(lock); // Release the lock after updating
             }
-        }
+        
 
         upc_barrier;
     }
+    
+    
     // Copy new population
-    for (int i = start; i < end; i++) {
+    for (int i = start; i < end; i++)
         population[i] = new_population[i];
-    }
+    
     upc_free(lock); // Free the lock after all generations
 
         upc_barrier;
         if (MYTHREAD == 0) {
             printf("Generation %d, Best Fitness: %f\n", gen, best_global_fitness);
         }
-            printf("Thread %d, Generation %d, Best Fitness: %f\n", MYTHREAD, gen, best_global_fitness);
-    }
+    
 
     if (MYTHREAD == 0) {
         printf("Final Best Fitness: %f\n", best_global_fitness);

@@ -44,7 +44,7 @@ void init_individual(Individual *ind) {
     srand(time(NULL) + MYTHREAD * 1000);
     for (int i = 0; i < DIM; i++) {
         ind->genes[i] = rand_double(LOWER_BOUND, UPPER_BOUND);
-        printf("Initiated genes: %d\n", ind->genes[i]); }
+        //printf("Initiated genes: %d\n", ind->genes[i]); }
     ind->fitness = evaluate(ind->genes);
     printf("Initiated fitness: %d\n", ind->fitness);
 }
@@ -144,7 +144,7 @@ void genetic_algorithm() {
 }
 
 int main() {
-    srand(time(NULL) + MYTHREAD * 1000);
+    srand(time(NULL) * 1000);
     genetic_algorithm();
     return 0;
 }

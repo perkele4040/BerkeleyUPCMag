@@ -60,11 +60,6 @@ int tournament_select(shared Individual *pop, int pop_per_thread) {
     return (pop[MYTHREAD * pop_per_thread + a].fitness <
             pop[MYTHREAD * pop_per_thread + b].fitness) ? a : b;
 }
-            // Select the individual with the lower fitness value
-            return (fitness_a < fitness_b) ? a : b;
-    return (pop[MYTHREAD * pop_per_thread + a].fitness <
-            pop[MYTHREAD * pop_per_thread + b].fitness) ? a : b;
-}
 
 // Crossover
 void crossover(const Individual *p1, const Individual *p2, Individual *child) {

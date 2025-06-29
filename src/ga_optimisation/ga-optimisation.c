@@ -46,7 +46,7 @@ void init_individual(Individual *ind) {
         //printf("Initiated genes: %d\n", ind->genes[i]); 
         }
     ind->fitness = evaluate(ind->genes);
-    printf("Initiated fitness: %d\n", ind->fitness);
+    printf("Initiated fitness: %e\n", ind->fitness);
 }
 
 // Tournament selection

@@ -44,7 +44,7 @@ double evaluate(const double *x) {
 void init_individual(Individual *ind) {
     for (int i = 0; i < DIM; i++) {
         ind->genes[i] = rand_double(LOWER_BOUND, UPPER_BOUND);
-        //printf("Initiated genes: %d\n", ind->genes[i]); 
+        printf("Initiated genes: %d\n", ind->genes[i]); 
         }
     ind->fitness = evaluate(ind->genes);
     printf("Initiated fitness: %f\n", ind->fitness);
@@ -110,14 +110,16 @@ void genetic_algorithm() {
             child.fitness = evaluate(child.genes);
             new_population[i] = child;
             printf("here4\n");
-            upc_lock(lock); // Acquire the lock before checking
+             // Acquire the lock before checking
             if (child.fitness < best_global_fitness) {
+                upc_lock(lock);
                 best_global_fitness = child.fitness;
                 for (int d = 0; d < DIM; d++)
                     best_global_solution[d] = child.genes[d];
+                upc_unlock(lock);
             }
             printf("here5\n");
-            upc_unlock(lock); // Release the lock after updating
+             // Release the lock after updating
             }
         
         printf("here6\n");
@@ -126,11 +128,11 @@ void genetic_algorithm() {
     
     
     // Copy new population
-    for (int i = start; i < end; i++)
-        population[i] = new_population[i];
+        for (int i = start; i < end; i++)
+            population[i] = new_population[i];
         printf("here7\n");
-    upc_free(lock); // Free the lock after all generations
-    printf("here8\n");
+        upc_free(lock); // Free the lock after all generations
+        printf("here8\n");
         upc_barrier;
         if (MYTHREAD == 0) {
             printf("Generation %d, Best Fitness: %f\n", gen, best_global_fitness);

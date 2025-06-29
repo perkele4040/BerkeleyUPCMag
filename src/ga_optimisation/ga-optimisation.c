@@ -28,7 +28,8 @@ shared Individual new_population[POP_SIZE];
 
 // Utility functions
 double rand_double(double min, double max) {
-    unsigned int seed = time(NULL) + MYTHREAD; // Thread-specific seed
+    unsigned int seed = time(NULL)*1234 + MYTHREAD; // Thread-specific seed
+    printf("Seed for thread %d: %u\n", MYTHREAD, seed);
     return min + ((double)rand_r(&seed) / RAND_MAX) * (max - min);
 }
 

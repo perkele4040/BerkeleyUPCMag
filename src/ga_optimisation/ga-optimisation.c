@@ -122,11 +122,11 @@ void genetic_algorithm() {
 
         upc_barrier;
     }
+    // Copy new population
+    for (int i = start; i < end; i++) {
+        population[i] = new_population[i];
+    }
     upc_free(lock); // Free the lock after all generations
-        // Copy new population
-        for (int i = start; i < end; i++) {
-            population[i] = new_population[i];
-        }
 
         upc_barrier;
         if (MYTHREAD == 0) {

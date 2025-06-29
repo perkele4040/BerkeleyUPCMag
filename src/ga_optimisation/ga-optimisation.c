@@ -121,7 +121,7 @@ void genetic_algorithm() {
         
 
         upc_barrier;
-    }
+    
     
     
     // Copy new population
@@ -134,7 +134,7 @@ void genetic_algorithm() {
         if (MYTHREAD == 0) {
             printf("Generation %d, Best Fitness: %f\n", gen, best_global_fitness);
         }
-    
+    }
 
     if (MYTHREAD == 0) {
         printf("Final Best Fitness: %f\n", best_global_fitness);

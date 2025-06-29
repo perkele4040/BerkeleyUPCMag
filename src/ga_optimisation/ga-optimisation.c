@@ -125,7 +125,7 @@ void genetic_algorithm() {
 
         upc_barrier;
 
-        if (MYTHREAD == 0 && gen % 10 == 0) {
+        if (MYTHREAD == 0 && gen % 1 == 0) {
             printf("Generation %d, Best Fitness: %f\n", gen, best_global_fitness);
         }
     }

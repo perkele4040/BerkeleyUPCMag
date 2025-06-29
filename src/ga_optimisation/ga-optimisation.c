@@ -94,22 +94,18 @@ void genetic_algorithm() {
     upc_barrier;
     
     upc_lock_t *lock = upc_all_lock_alloc(); // Allocate lock outside the loop
-    printf("here1\n");
     for (int gen = 0; gen < GENERATIONS; gen++) {
         for (int i = start; i < end; i++) {
             int p1_idx = tournament_select(population, pop_per_thread) + start;
             int p2_idx = tournament_select(population, pop_per_thread) + start;
-            printf("here2\n");
             Individual child;
             if (((double)rand() / RAND_MAX) < CROSSOVER_RATE)
                 crossover(&population[p1_idx], &population[p2_idx], &child);
             else
                 child = population[p1_idx];
-            printf("here3\n");
             mutate(&child);
             child.fitness = evaluate(child.genes);
             new_population[i] = child;
-            printf("here4\n");
              // Acquire the lock before checking
             if (child.fitness < best_global_fitness) {
                 upc_lock(lock);
@@ -118,11 +114,9 @@ void genetic_algorithm() {
                     best_global_solution[d] = child.genes[d];
                 upc_unlock(lock);
             }
-            printf("here5\n");
              // Release the lock after updating
             }
         
-        printf("here6\n");
         upc_barrier;
     
     
@@ -130,9 +124,7 @@ void genetic_algorithm() {
     // Copy new population
         for (int i = start; i < end; i++)
             population[i] = new_population[i];
-        printf("here7\n");
         upc_free(lock); // Free the lock after all generations
-        printf("here8\n");
         upc_barrier;
         if (MYTHREAD == 0) {
             printf("Generation %d, Best Fitness: %f\n", gen, best_global_fitness);

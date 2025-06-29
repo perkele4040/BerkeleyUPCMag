@@ -92,9 +92,9 @@ void genetic_algorithm() {
     }
 
     upc_barrier;
-
-    for (int gen = 0; gen < GENERATIONS; gen++) {
+    
     upc_lock_t *lock = upc_all_lock_alloc(); // Allocate lock outside the loop
+
     for (int gen = 0; gen < GENERATIONS; gen++) {
         for (int i = start; i < end; i++) {
             int p1_idx = tournament_select(population, pop_per_thread) + start;

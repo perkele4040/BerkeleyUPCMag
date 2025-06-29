@@ -41,10 +41,10 @@ double evaluate(const double *x) {
 
 // Initialize individual
 void init_individual(Individual *ind) {
-    srand(time(NULL) + MYTHREAD * 1000);
     for (int i = 0; i < DIM; i++) {
         ind->genes[i] = rand_double(LOWER_BOUND, UPPER_BOUND);
-        //printf("Initiated genes: %d\n", ind->genes[i]); }
+        //printf("Initiated genes: %d\n", ind->genes[i]); 
+        }
     ind->fitness = evaluate(ind->genes);
     printf("Initiated fitness: %d\n", ind->fitness);
 }

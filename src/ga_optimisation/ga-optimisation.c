@@ -19,7 +19,7 @@ shared double best_global_solution[DIM];
 // Structure for individual
 typedef struct {
     double genes[DIM];
-    double fitness = DBL_MAX;
+    double fitness;
 } Individual;
 
 // Shared population divided across threads
@@ -43,7 +43,9 @@ double evaluate(const double *x) {
 void init_individual(Individual *ind) {
     for (int i = 0; i < DIM; i++)
         ind->genes[i] = rand_double(LOWER_BOUND, UPPER_BOUND);
+        printf("Initiated genes: %d\n", ind->genes[i]);
     ind->fitness = evaluate(ind->genes);
+    printf("Initiated fitness: %d\n", ind->fitness);
 }
 
 // Tournament selection

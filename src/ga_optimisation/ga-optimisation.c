@@ -28,7 +28,8 @@ shared Individual new_population[POP_SIZE];
 
 // Utility functions
 double rand_double(double min, double max) {
-    return min + ((double)rand() / RAND_MAX) * (max - min);
+    unsigned int seed = time(NULL) + MYTHREAD; // Thread-specific seed
+    return min + ((double)rand_r(&seed) / RAND_MAX) * (max - min);
 }
 
 // Objective function: Sphere
@@ -42,17 +43,25 @@ double evaluate(const double *x) {
 // Initialize individual
 void init_individual(Individual *ind) {
     for (int i = 0; i < DIM; i++) {
-        ind->genes[i] = ((double)rand_double(LOWER_BOUND, UPPER_BOUND));
+        ind->genes[i] = rand_double(LOWER_BOUND, UPPER_BOUND);
         //printf("Initiated genes: %d\n", ind->genes[i]); 
         }
     ind->fitness = evaluate(ind->genes);
-    printf("Initiated fitness: %e\n", ind->fitness);
+    printf("Initiated fitness: %f\n", ind->fitness);
 }
 
 // Tournament selection
 int tournament_select(shared Individual *pop, int pop_per_thread) {
-    int a = rand() % pop_per_thread;
-    int b = rand() % pop_per_thread;
+    unsigned int seed = time(NULL) + MYTHREAD; // Thread-specific seed
+    int a = rand_r(&seed) % pop_per_thread;
+    int b = rand_r(&seed) % pop_per_thread;
+    a = a % pop_per_thread; // Ensure 'a' is within valid range
+    b = b % pop_per_thread; // Ensure 'b' is within valid range
+    return (pop[MYTHREAD * pop_per_thread + a].fitness <
+            pop[MYTHREAD * pop_per_thread + b].fitness) ? a : b;
+}
+            // Select the individual with the lower fitness value
+            return (fitness_a < fitness_b) ? a : b;
     return (pop[MYTHREAD * pop_per_thread + a].fitness <
             pop[MYTHREAD * pop_per_thread + b].fitness) ? a : b;
 }
@@ -60,10 +69,8 @@ int tournament_select(shared Individual *pop, int pop_per_thread) {
 // Crossover
 void crossover(const Individual *p1, const Individual *p2, Individual *child) {
     for (int i = 0; i < DIM; i++) {
-        if (((double)rand() / RAND_MAX) < 0.5)
-            child->genes[i] = p1->genes[i];
-        else
-            child->genes[i] = p2->genes[i];
+        unsigned int seed = time(NULL) + MYTHREAD; // Thread-specific seed
+        child->genes[i] = (((double)rand_r(&seed) / RAND_MAX) < 0.5) ? p1->genes[i] : p2->genes[i];
     }
 }
 
@@ -92,6 +99,7 @@ void genetic_algorithm() {
     upc_barrier;
 
     for (int gen = 0; gen < GENERATIONS; gen++) {
+        upc_lock_t *lock = upc_all_lock_alloc(); // Allocate lock outside the loop
         for (int i = start; i < end; i++) {
             int p1_idx = tournament_select(population, pop_per_thread) + start;
             int p2_idx = tournament_select(population, pop_per_thread) + start;
@@ -108,8 +116,7 @@ void genetic_algorithm() {
 
             // Update best individual locally
             if (child.fitness < best_global_fitness) {
-                upc_lock_t *lock = upc_all_lock_alloc();
-                upc_lock(lock);
+                upc_lock(lock); // Reuse the allocated lock
                 if (child.fitness < best_global_fitness) {
                     best_global_fitness = child.fitness;
                     for (int d = 0; d < DIM; d++)
@@ -118,6 +125,7 @@ void genetic_algorithm() {
                 upc_unlock(lock);
             }
         }
+        upc_free(lock); // Free the lock after the loop
 
         upc_barrier;
 
@@ -127,7 +135,7 @@ void genetic_algorithm() {
         }
 
         upc_barrier;
-
+        if (MYTHREAD == 0) {
         if (MYTHREAD == 0 && gen % 1 == 0) {
             printf("Generation %d, Best Fitness: %f\n", gen, best_global_fitness);
         }
@@ -144,7 +152,7 @@ void genetic_algorithm() {
 }
 
 int main() {
-    srand(time(NULL) * 1000);
+    unsigned int seed = time(NULL) + MYTHREAD;
     genetic_algorithm();
     return 0;
 }

@@ -44,7 +44,7 @@ double evaluate(const double *x) {
 void init_individual(Individual *ind) {
     for (int i = 0; i < DIM; i++) {
         ind->genes[i] = rand_double(LOWER_BOUND, UPPER_BOUND);
-        printf("Initiated genes: %d\n", ind->genes[i]); 
+        //printf("Initiated genes: %f\n", ind->genes[i]); 
         }
     ind->fitness = evaluate(ind->genes);
     printf("Initiated fitness: %f\n", ind->fitness);

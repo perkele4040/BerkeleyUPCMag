@@ -19,7 +19,7 @@ shared double best_global_solution[DIM];
 // Structure for individual
 typedef struct {
     double genes[DIM];
-    double fitness;
+    double fitness = DBL_MAX;
 } Individual;
 
 // Shared population divided across threads

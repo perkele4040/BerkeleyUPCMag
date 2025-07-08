@@ -1,2 +1,5 @@
-src/bubble-sort/*.exe
-src/bubble-sort/*.json
+src/*/*.json
+src/*/*.exe
+src/*/*.jpg
+src/*/*.jpeg
+src/*/*.ppm

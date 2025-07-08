@@ -10,22 +10,19 @@ typedef struct {
 } Pixel;
 
 shared Pixel *image_data; // Flattened shared image array
-int width, height;
+shared int width=2500, height=2500;
 int local_start, local_end;
 
-
-
-
-void load_ppm(const char *filename, Pixel **data, int *width, int *height) {
-    FILE *fp = fopen(filename, "rb");
+void load_ppm(const char *filename, Pixel **data) {
+    FILE *fp = fopen(filename, "r");
     if (!fp) {
         perror("File open failed");
         exit(EXIT_FAILURE);
     }
 
     char header[3];
-    if (fscanf(fp, "%2s", header) != 1 || strcmp(header, "P6") != 0) {
-        fprintf(stderr, "Unsupported format (only binary P6 allowed)\n");
+    if (fscanf(fp, "%2s", header) != 1 || strcmp(header, "P3") != 0) {
+        fprintf(stderr, "Unsupported format (only ASCII P3 allowed)\n");
         exit(EXIT_FAILURE);
     }
 
@@ -35,70 +32,62 @@ void load_ppm(const char *filename, Pixel **data, int *width, int *height) {
     ungetc(c, fp);
 
     // Read dimensions
-    fscanf(fp, "%d %d", width, height);
+    //fscanf(fp, "%d %d", &width, &height);
 
     int maxval;
     fscanf(fp, "%d", &maxval);
     fgetc(fp); // consume newline
 
-    size_t img_size = (*width) * (*height);
+    size_t img_size = (width) * (height);
     *data = malloc(sizeof(Pixel) * img_size);
-    fread(*data, sizeof(Pixel), img_size, fp);
+    for (size_t i = 0; i < img_size; i++) {
+        int r, g, b;
+        fscanf(fp, "%d %d %d", &r, &g, &b);
+        (*data)[i].r = (unsigned char)r;
+        (*data)[i].g = (unsigned char)g;
+        (*data)[i].b = (unsigned char)b;
+    }
     fclose(fp);
 }
 
-void save_ppm(const char *filename, Pixel *data, int width, int height) {
-    FILE *fp = fopen(filename, "wb");
+void save_ppm(const char *filename, Pixel *data) {
+    FILE *fp = fopen(filename, "w");
     if (!fp) {
         perror("Save file open failed");
         exit(EXIT_FAILURE);
     }
-    fprintf(fp, "P6\n%d %d\n255\n", width, height);
-    fwrite(data, sizeof(Pixel), width * height, fp);
+    fprintf(fp, "P3\n%d %d\n255\n", width, height);
+    for (int i = 0; i < (width) * (height); i++) {
+        fprintf(fp, "%d %d %d\n", data[i].r, data[i].g, data[i].b);
+    }
     fclose(fp);
 }
 
-void create_image(const char *filename, int width, int height) {
-    FILE *fp = fopen(filename, "wb");
+/*void create_image(const char *filename, int width, int height) {
+    FILE *fp = fopen(filename, "w");
     if (!fp) {
         perror("Save file open failed");
         exit(EXIT_FAILURE);
     }
-    fprintf(fp, "P6\n%d %d\n255\n", width, height);
-    //fwrite(data, sizeof(Pixel), width * height, fp);
+    fprintf(fp, "P3\n%d %d\n255\n", width, height);
     fclose(fp);
-}
+}*/
 
 int main(int argc, char **argv) {
 
-
-    char outname[] = "image-inverted.ppm";
-
-    if (MYTHREAD == 0) {
-        save_ppm(outname, width, height);
-    }
-    return 0;
-}
-    /*
-    if (MYTHREAD == 0) {
-        if (argc < 2) {
-            fprintf(stderr, "Usage: %s <image.ppm>\n", argv[0]);
-            upc_global_exit(1);
-        }
-    }
-
     upc_barrier;
+    char inname[] = "solid-color-image-p3.ppm";
 
     Pixel *local_image = NULL;
     if (MYTHREAD == 0) {
-        load_ppm(argv[1], &local_image, &width, &height);
+        load_ppm(inname, &local_image);
     }
 
     // Broadcast image size
-    upc_all_broadcast(&width, &width, sizeof(int), 0);
-    upc_all_broadcast(&height, &height, sizeof(int), 0);
-    size_t img_size = width * height;
-
+    //upc_all_broadcast(&width, &width, sizeof(int), 0);
+    //upc_all_broadcast(&height, &height, sizeof(int), 0);
+    size_t img_size = (width) * (height);
+    printf("thread %d here with im_size = %zu\n", MYTHREAD, img_size);
     // Allocate shared array
     image_data = upc_all_alloc(img_size, sizeof(Pixel));
 
@@ -117,9 +106,11 @@ int main(int argc, char **argv) {
         image_data[i].r = 255 - image_data[i].r;
         image_data[i].g = 255 - image_data[i].g;
         image_data[i].b = 255 - image_data[i].b;
+        //printf("Thread %d inverted pixel %zu\n", MYTHREAD, i);
     }
 
     upc_barrier;
+///*
 
     // Master gathers data and saves
     if (MYTHREAD == 0) {
@@ -129,21 +120,17 @@ int main(int argc, char **argv) {
         }
 
         // Construct new filename
-        char outname[MAX_FILENAME];
-        const char *dot = strrchr(argv[1], '.');
-        if (dot) {
-            snprintf(outname, MAX_FILENAME, "%.*s-inverted%s", (int)(dot - argv[1]), argv[1], dot);
-        } else {
-            snprintf(outname, MAX_FILENAME, "%s-inverted.ppm", argv[1]);
-        }
+        char outname[] = "image-inverted.ppm";
+        
 
-        save_ppm(outname, output, width, height);
+        save_ppm(outname, output);
         printf("Inverted image saved as: %s\n", outname);
         free(output);
     }
 
     upc_barrier;
-
+    //*/
     upc_free(image_data);
+
     return 0;
 }

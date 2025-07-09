@@ -1,0 +1,5 @@
+src/*/*.exe
+src/*/*.txt
+src/*/*.jpg
+src/*/*.ppm
+src/*/*.jpeg

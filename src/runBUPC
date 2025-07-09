@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Check if argument is provided
+if [ -z "$2" ] || [ -z "$1" ]; then
+    echo "Usage: $0 <subdirectory_with_file> <filename_without_extension> <number_of_threads> "
+    exit 1
+fi
+
+# Set the filename from the argument
+FILENAME="$2"
+cd $1
+# Compile the C file
+#gcc -o "$FILENAME.exe" "$FILENAME.c" ../common-functions/common-functions.c
+/home/admin1/BUPC/upcc-build/upcc -T $3 -o "$FILENAME.exe" "$FILENAME.c" ../common-functions/common-functions.c
+if [ $? -ne 0 ]; then
+    echo "Compilation failed."
+    exit 1
+fi
+
+# Run the compiled executable
+#./"$FILENAME.exe"
+/home/admin1/BUPC/upcc-build/upcrun -n $3 "$FILENAME.exe"

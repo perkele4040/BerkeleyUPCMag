@@ -1,5 +1,7 @@
+src/*/*.json
 src/*/*.exe
-src/*/*.txt
 src/*/*.jpg
-src/*/*.ppm
 src/*/*.jpeg
+src/*/*.ppm
+.vscode/settings.json
+src/a

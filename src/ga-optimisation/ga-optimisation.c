@@ -5,55 +5,34 @@
 #include <float.h>
 #include <time.h>
 
-#define POP_SIZE 100       // Total population
-#define DIM 10             // Problem dimensionality
-#define GENERATIONS 100    // Number of generations
-#define MUTATION_RATE 0.1  // Mutation rate
-#define CROSSOVER_RATE 0.7 // Crossover rate
-#define LOWER_BOUND -5.0
-#define UPPER_BOUND 5.0
+#define POP_SIZE 100       // Rozmiar populacji
+#define DIM 10             // Ilość zmiennych osobnika
+#define GENERATIONS 1000    // Ilość pokoleń
+#define MUTATION_RATE 0.1  // Współczynnik mutacji
+#define CROSSOVER_RATE 0.7 // Współczynnik krzyżowania
+#define LOWER_BOUND -5.0 // Dolna granica poszukiwań
+#define UPPER_BOUND 5.0 // Górna granica poszukiwań
 
-shared double best_global_fitness = DBL_MAX;
-shared double best_global_solution[DIM];
-unsigned int seed;
-
-// Structure for individual
+// Struktura przedstawiająca osobnika
 typedef struct {
     double genes[DIM];
     double fitness;
 } Individual;
 
-// Shared population divided across threads
+// Wszystke zmienne przechowywane w pamięci współdzielonej
+shared double best_global_fitness = DBL_MAX;
+shared double best_global_solution[DIM];
+shared unsigned int thread_seeds[THREADS];
 shared Individual population[POP_SIZE];
 shared Individual new_population[POP_SIZE];
 
-// Utility functions
 double rand_double(double min, double max) {
-    //unsigned int seed = time(NULL)*1234 + MYTHREAD; // Thread-specific seed
-    //printf("Seed for thread %d: %u\n", MYTHREAD, seed);
-    return min + ((double)rand_r(&seed) / RAND_MAX) * (max - min);
+    return min + ((double)rand_r(&thread_seeds[MYTHREAD]) / RAND_MAX) * (max - min);
 }
 
-// Objective function: Sphere
-double evaluate2(const double *x) {
-    double sum = 0.0;
-    for (int i = 0; i < DIM; i++)
-        sum += x[i] * x[i];
-    return sum;
-}
-
-double evaluate3(const double *x) {
-    double product = 1.0;
-    for (int i = 0; i < DIM; i++)
-        product *= sin(x[i]);
-    return product*1000+100.0; // Example: Sphere function with a constant offset
-    // offset added to ensure non-zero global minimum
-}
-
-
-// Custom benchmark function (non-convex, non-zero minimum):
+// Funkcja testująca do optymalizacji
 // f(x) = sum((x_i^4 - 16*x_i^2 + 5*x_i)) + 200.0
-// Global minimum is non-zero and non-trivial to find
+// Minimum globalne jest niezerowe, nietrywialne do znalezienia
 double evaluate(const double *x) {
     double sum = 0.0;
     for (int i = 0; i < DIM; ++i) {
@@ -63,57 +42,35 @@ double evaluate(const double *x) {
     return sum + 200.0;
 }
 
-/*
-Each term has multiple local minima and maxima.
-
-It combines polynomial terms → nonlinear, non-convex, smooth.
-
-The added constant +200.0 ensures global minimum is not zero.
-
-Can be evaluated within a bounded domain, e.g. 
-
-This is a great choice for evolutionary algorithms like genetic algorithms, because:
-
-It presents a rugged landscape.
-
-No trigonometric functions—uses only arithmetic and powers.
-
-Global minimum is not at the origin and not zero, making convergence tracking more interesting.
-*/
-
-// Initialize individual
+// Inicjalizacja osobnika
 void init_individual(Individual *ind) {
     for (int i = 0; i < DIM; i++) {
         ind->genes[i] = rand_double(LOWER_BOUND, UPPER_BOUND);
-        //printf("Initiated genes: %f\n", ind->genes[i]); 
         }
     ind->fitness = evaluate(ind->genes);
-    printf("Initiated fitness: %f\n", ind->fitness);
+    ind->fitness = evaluate(ind->genes);
 }
 
-// Tournament selection
+// Selekcja turniejowa
 int tournament_select(shared Individual *pop, int pop_per_thread) {
-    //unsigned int seed = time(NULL) + MYTHREAD; // Thread-specific seed
-    int a = rand_r(&seed) % pop_per_thread;
-    int b = rand_r(&seed) % pop_per_thread;
-    // 'a' and 'b' are already within valid range due to modulo operation in rand_r
+    int a = rand_r(&thread_seeds[MYTHREAD]) % pop_per_thread;
+    int b = rand_r(&thread_seeds[MYTHREAD]) % pop_per_thread;
     return (pop[MYTHREAD * pop_per_thread + a].fitness <
             pop[MYTHREAD * pop_per_thread + b].fitness) ? a : b;
 }
 
-// Crossover
+// Krzyżowanie
 void crossover(const Individual *p1, const Individual *p2, Individual *child) {
     for (int i = 0; i < DIM; i++) {
-        //unsigned int seed = time(NULL) + MYTHREAD; // Thread-specific seed
-        child->genes[i] = (((double)rand_r(&seed) / RAND_MAX) < 0.5) ? p1->genes[i] : p2->genes[i];
+        child->genes[i] = (((double)rand_r(&thread_seeds[MYTHREAD]) / RAND_MAX) < 0.5) ? p1->genes[i] : p2->genes[i];
     }
 }
 
-// Mutation
+// Mutacja
 void mutate(Individual *ind) {
     for (int i = 0; i < DIM; i++) {
-        //unsigned int seed = time(NULL) + MYTHREAD; // Thread-specific seed
-        if (((double)rand_r(&seed) / RAND_MAX) < MUTATION_RATE) {
+        // Use thread-local seed
+        if (((double)rand_r(&thread_seeds[MYTHREAD]) / RAND_MAX) < MUTATION_RATE) {
             ind->genes[i] += rand_double(-0.5, 0.5);
             if (ind->genes[i] < LOWER_BOUND) ind->genes[i] = LOWER_BOUND;
             if (ind->genes[i] > UPPER_BOUND) ind->genes[i] = UPPER_BOUND;
@@ -121,20 +78,21 @@ void mutate(Individual *ind) {
     }
 }
 
-// GA loop
+// Główna pętla optymalizacji genetycznej
 void genetic_algorithm() {
     int pop_per_thread = POP_SIZE / THREADS;
     int start = MYTHREAD * pop_per_thread;
     int end = start + pop_per_thread;
 
-    // Initialize population
+    // Inicjalizacja całej populacji
     for (int i = start; i < end; i++)
         init_individual(&population[i]);
-    
-
+    // Synchronizacja wątków, by uniknąć operacji na niezainicjalizowanej populacji
     upc_barrier;
     
-    upc_lock_t *lock = upc_all_lock_alloc(); // Allocate lock outside the loop
+     // Alokacja zamka do kontroli dostępu do zmiennych współdzielonych
+     upc_lock_t *lock = upc_all_lock_alloc();
+
     for (int gen = 0; gen < GENERATIONS; gen++) {
         for (int i = start; i < end; i++) {
             int p1_idx = tournament_select(population, pop_per_thread) + start;
@@ -147,37 +105,25 @@ void genetic_algorithm() {
             mutate(&child);
             child.fitness = evaluate(child.genes);
             new_population[i] = child;
-             // Acquire the lock before checking
-            //upc_lock(lock);
-            //printf("locked by thread %d\n", MYTHREAD);
-            
+
+            upc_lock(lock);
             if (child.fitness < best_global_fitness) {
-                
-                
                 best_global_fitness = child.fitness;
                 for (int d = 0; d < DIM; d++)
                     best_global_solution[d] = child.genes[d];
-                
             }
-            // Release the lock after updating
-            //upc_unlock(lock);
-            //printf("unlocked by thread %d\n", MYTHREAD);
-             
+            upc_unlock(lock);
             }
-        
+        //Synchronizacja wątków, by uniknąć konfliktów przy zapisie do współdzielonej populacji
         upc_barrier;
-    
-    
-    
-    // Copy new population
         for (int i = start; i < end; i++)
             population[i] = new_population[i];
-        upc_free(lock); // Free the lock after all generations
         upc_barrier;
         if (MYTHREAD == 0) {
-            printf("Generation %d, Best Fitness: %f\n", gen, best_global_fitness);
+            // printf("Generation %d, Best Fitness: %f\n", gen, best_global_fitness);
         }
     }
+    upc_free(lock);
 
     if (MYTHREAD == 0) {
         printf("Final Best Fitness: %f\n", best_global_fitness);
@@ -190,7 +136,8 @@ void genetic_algorithm() {
 }
 
 int main() {
-    seed = time(NULL)*1234 + MYTHREAD;
+    thread_seeds[MYTHREAD] = time(NULL)*1234 + MYTHREAD;
+    upc_barrier;
     genetic_algorithm();
     return 0;
 }

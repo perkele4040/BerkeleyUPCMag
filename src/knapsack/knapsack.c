@@ -9,11 +9,8 @@
 // Shared arrays for dynamic programming
 shared int dp[2][W + 1];  // We toggle between 2 rows
 
-// Local arrays (each thread will own a part of these)
 shared int weights[N];
 shared int values[N];
-
-// Initialize arrays with random values in range 0-15
 
 
 
@@ -23,7 +20,7 @@ int main() {
     double elapsed;
     if (MYTHREAD == 0) {
         for (int i = 0; i < N; i++) {
-            weights[i] = rand() % 17 + 1;
+            weights[i] = rand() % 15 + 1;
             values[i] = rand() % 16;
             printf("Item %d: Weight = %d, Value = %d\n", i, weights[i], values[i]);
         }

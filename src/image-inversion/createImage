@@ -1,9 +1,0 @@
-#!/bin/bash
-
-W=5; H=4
-touch image.ppm
-echo "P3\n${W} ${H}\n255" > image.ppm
-for ((i=0;i<$((W*H*3));i++)) ; do 
-   echo $((RANDOM%255))
-   #echo $(0)
-done >> image.ppm

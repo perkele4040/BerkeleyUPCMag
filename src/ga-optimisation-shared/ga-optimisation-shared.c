@@ -4,14 +4,15 @@
 #include <math.h>
 #include <float.h>
 #include <time.h>
+#include <upc_tick.h>
 
-#define POP_SIZE 100       // Rozmiar populacji
-#define DIM 10             // Ilość zmiennych osobnika
+#define POP_SIZE 100    // Rozmiar populacji
+#define DIM 10  // Ilość zmiennych osobnika
 #define GENERATIONS 1000    // Ilość pokoleń
-#define MUTATION_RATE 0.1  // Współczynnik mutacji
-#define CROSSOVER_RATE 0.7 // Współczynnik krzyżowania
-#define LOWER_BOUND -5.0 // Dolna granica poszukiwań
-#define UPPER_BOUND 5.0 // Górna granica poszukiwań
+#define MUTATION_RATE 0.1   // Współczynnik mutacji
+#define CROSSOVER_RATE 0.7  // Współczynnik krzyżowania
+#define LOWER_BOUND -5.0    // Dolna granica poszukiwań
+#define UPPER_BOUND 5.0     // Górna granica poszukiwań
 
 // Struktura przedstawiająca osobnika
 typedef struct {
@@ -80,6 +81,8 @@ void mutate(Individual *ind) {
 
 // Główna pętla optymalizacji genetycznej
 void genetic_algorithm() {
+    upc_tick_t time_start, time_end;
+    double time_elapsed;
     int pop_per_thread = POP_SIZE / THREADS;
     int start = MYTHREAD * pop_per_thread;
     int end = start + pop_per_thread;
@@ -90,9 +93,9 @@ void genetic_algorithm() {
     // Synchronizacja wątków, by uniknąć operacji na niezainicjalizowanej populacji
     upc_barrier;
     
-     // Alokacja zamka do kontroli dostępu do zmiennych współdzielonych
-     upc_lock_t *lock = upc_all_lock_alloc();
-
+    // Alokacja zamka do kontroli dostępu do zmiennych współdzielonych
+    upc_lock_t *lock = upc_all_lock_alloc();
+    time_start = upc_ticks_now();
     for (int gen = 0; gen < GENERATIONS; gen++) {
         for (int i = start; i < end; i++) {
             int p1_idx = tournament_select(population, pop_per_thread) + start;
@@ -113,29 +116,34 @@ void genetic_algorithm() {
                     best_global_solution[d] = child.genes[d];
             }
             upc_unlock(lock);
-            }
+        }
         //Synchronizacja wątków, by uniknąć konfliktów przy zapisie do współdzielonej populacji
         upc_barrier;
         for (int i = start; i < end; i++)
             population[i] = new_population[i];
         upc_barrier;
         if (MYTHREAD == 0) {
-            // printf("Generation %d, Best Fitness: %f\n", gen, best_global_fitness);
+            printf("Generation %d, Best Fitness: %f\n", gen, best_global_fitness);
         }
     }
     upc_free(lock);
-
+    time_end = upc_ticks_now();
+    time_elapsed = upc_ticks_to_ns(time_end - time_start);
     if (MYTHREAD == 0) {
         printf("Final Best Fitness: %f\n", best_global_fitness);
         printf("Best Solution: ");
         for (int i = 0; i < DIM; i++) {
             printf("%f ", best_global_solution[i]);
         }
-        printf("\n");
+        printf("\nElapsed time for main calculation in milliseconds:\n");
     }
+    // Synchronizacja wątków w celu wymuszenia kolejności wypisywania czasu
+    upc_barrier;
+    printf("Thread %d - %f milliseconds\n", MYTHREAD, time_elapsed/1000000.0);
 }
 
 int main() {
+    // Inicjalizacja ziarna losowania dla każdego wątku
     thread_seeds[MYTHREAD] = time(NULL)*1234 + MYTHREAD;
     upc_barrier;
     genetic_algorithm();

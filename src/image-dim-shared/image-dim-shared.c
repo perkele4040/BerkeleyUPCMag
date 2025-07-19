@@ -96,8 +96,8 @@ void save_ppm(const char *filename, shared Pixel *data)
 int main()
 {
     
-    upc_tick_t start, end;
-    double elapsed;
+    upc_tick_t time_start, time_end;
+    double time_elapsed;
     char inname[] = "mona-lisa-p3.ppm";
     char outname[] = "mona-lisa-corrected.ppm";
 
@@ -124,20 +124,20 @@ int main()
     }
 
     upc_barrier;
-    start = upc_ticks_now();
+    time_start = upc_ticks_now();
     
     // Parallel image inversion
     for (size_t i = MYTHREAD; i < img_size; i += THREADS) {
         image_data[i] = applyGammaCorrection(image_data[i]);
     }
-    end = upc_ticks_now();
+    time_end = upc_ticks_now();
     upc_barrier;
 
-    elapsed = upc_ticks_to_ns(end - start);
+    time_elapsed = upc_ticks_to_ns(time_end - time_start);
     if(MYTHREAD==0) {
         printf("Elapsed time for main calculation in milliseconds:\n");
     }
-    printf("Thread %d - %f milliseconds\n", MYTHREAD, elapsed/1000000.0);
+    printf("Thread %d - %f milliseconds\n", MYTHREAD, time_elapsed/1000000.0);
     // Master gathers data and saves
     if (MYTHREAD == 0) {
         // Save directly from shared image_data

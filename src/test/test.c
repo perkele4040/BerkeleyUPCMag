@@ -1,7 +1,7 @@
 /* 
 image dim - relaxed vs strict DONE
-ga optimisation - broadcast NOSYNC vs ALLSYNC DONE
-bubble sort - scatter? broadcast exchange?
-quick sort - scatter
 knapsack - relaxed vs strict DONE
+ga optimisation - BROADCAST NOSYNC vs ALLSYNC DONE
+bubble sort - SCATTER-GATHER NOSYNC VS ALLSYNC - todo
+quick sort - BROADCAST-EXCHANGE VS SCATTER-GATHER
  */

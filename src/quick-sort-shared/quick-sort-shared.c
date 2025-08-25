@@ -71,7 +71,7 @@ int main() {
     time_end = upc_ticks_now();
     // how to make ths work without copying to local array?
     // quicksort(shared_array, start, end-1);
-
+//IDEALNA OPCJA NA SCATTER?
     // Copy sorted local array back to shared array
     for (int i = 0; i < local_size; i++) {
         shared_array[start + i] = local_array[i];

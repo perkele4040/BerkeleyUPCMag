@@ -68,7 +68,7 @@ int main() {
     seed = (unsigned int *)malloc(sizeof(unsigned int));
     *seed = time(NULL)*1234 + MYTHREAD;
     srand(*seed);
-
+    
     // Zmienne pomocnicze
     upc_tick_t time_start, time_end;
     double time_elapsed;
@@ -94,7 +94,7 @@ int main() {
     
     // Rozgłoszenie populacji początkowej
     upc_barrier;
-    upc_all_broadcast(population, new_population, sizeof(Individual)*POP_SIZE, UPC_IN_NOSYNC | UPC_OUT_NOSYNC);
+    upc_all_broadcast(population, new_population, sizeof(Individual)*POP_SIZE, UPC_IN_ALLSYNC | UPC_OUT_ALLSYNC);
 
     // Alokacja zamka do kontroli dostępu do zmiennych współdzielonych
     upc_lock_t *lock = upc_all_lock_alloc();
@@ -131,7 +131,7 @@ int main() {
             new_population[0] = elite;
         //Synchronizacja wątków, by uniknąć konfliktów przy zapisie do współdzielonej populacji
         upc_barrier;
-        upc_all_broadcast(population, new_population, sizeof(Individual)*POP_SIZE, UPC_IN_NOSYNC | UPC_OUT_NOSYNC);
+        upc_all_broadcast(population, new_population, sizeof(Individual)*POP_SIZE, UPC_IN_ALLSYNC | UPC_OUT_ALLSYNC);
         upc_barrier;
         fflush(stdout);
         /* if (MYTHREAD == 0) {

@@ -2,134 +2,134 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
+#include <upc_tick.h>
+#include <upc_strict.h>
 
-#define MAX_FILENAME 256
+#define GAMMA 2.0f
+#define WIDTH 2000
+#define HEIGHT 2980
+#define TOTALSIZE (WIDTH * HEIGHT)
+#define NELEMS (TOTALSIZE/(THREADS))
 
-typedef struct {
-    unsigned char r, g, b;
+// Struktura przechowujaca dane piksela
+typedef struct
+{
+    unsigned int r, g, b;
 } Pixel;
 
-shared Pixel *image_data; // Flattened shared image array
-shared int width=2500, height=2500;
-int local_start, local_end;
+// Wszystkie dane sa przechowywane w pamieci wspoldzielonej
+shared [] Pixel * image_data;
 
-void load_ppm(const char *filename, Pixel **data) {
+Pixel applyGammaCorrection(Pixel p)
+{
+    Pixel corrected;
+    // Zmiana gamma dla kazdego kanalu RGB
+    // Poprawka gamma: corrected = 255 * (p / 255) ^ gamma
+    corrected.r = (unsigned int)(255.0 * pow((double)p.r / 255.0, GAMMA));
+    corrected.g = (unsigned int)(255.0 * pow((double)p.g / 255.0, GAMMA));
+    corrected.b = (unsigned int)(255.0 * pow((double)p.b / 255.0, GAMMA));
+    return corrected;
+}
+
+// Funkcja wczytujaca obraz z pliku PPM
+//Funkcja zaklada, ze obraz nie posiada komentarzy
+void load_ppm(const char *filename, Pixel **data)
+{
     FILE *fp = fopen(filename, "r");
-    if (!fp) {
+    if (!fp)
+    {
         perror("File open failed");
         exit(EXIT_FAILURE);
     }
-
     char header[3];
-    if (fscanf(fp, "%2s", header) != 1 || strcmp(header, "P3") != 0) {
+    if (fscanf(fp, "%2s", header) != 1 || strcmp(header, "P3") != 0)
+    {
         fprintf(stderr, "Unsupported format (only ASCII P3 allowed)\n");
         exit(EXIT_FAILURE);
     }
-
-    // Skip comments
-    int c;
-    do { c = fgetc(fp); } while (c == '#');
-    ungetc(c, fp);
-
-    // Read dimensions
-    //fscanf(fp, "%d %d", &width, &height);
-
-    int maxval;
-    fscanf(fp, "%d", &maxval);
-    fgetc(fp); // consume newline
-
-    size_t img_size = (width) * (height);
-    *data = malloc(sizeof(Pixel) * img_size);
-    for (size_t i = 0; i < img_size; i++) {
-        int r, g, b;
-        fscanf(fp, "%d %d %d", &r, &g, &b);
-        (*data)[i].r = (unsigned char)r;
-        (*data)[i].g = (unsigned char)g;
-        (*data)[i].b = (unsigned char)b;
+    int file_width, file_height, maxval;
+    if (fscanf(fp, "%d %d", &file_width, &file_height) != 2)
+    {
+        fprintf(stderr, "Failed to read image dimensions\n");
+        exit(EXIT_FAILURE);
     }
+    if (fscanf(fp, "%d", &maxval) != 1)
+    {
+        fprintf(stderr, "Failed to read max color value\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    *data = malloc(sizeof(Pixel) * file_width * file_height);
+    for (size_t i = 0; i < (size_t)(file_width * file_height); i++)
+    {
+        int r, g, b;
+        int ret=fscanf(fp, "%d %d %d", &r, &g, &b);
+        if (ret != 3)
+        {
+            fprintf(stderr, "Failed to read pixel data\n");
+            exit(EXIT_FAILURE);
+        }
+        (*data)[i].r = (unsigned int)r;
+        (*data)[i].g = (unsigned int)g;
+        (*data)[i].b = (unsigned int)b;
+    }
+    
     fclose(fp);
 }
 
-void save_ppm(const char *filename, Pixel *data) {
+void save_ppm(const char *filename, shared [] Pixel *data)
+{
     FILE *fp = fopen(filename, "w");
-    if (!fp) {
+    if (!fp)
+    {
         perror("Save file open failed");
         exit(EXIT_FAILURE);
     }
-    fprintf(fp, "P3\n%d %d\n255\n", width, height);
-    for (int i = 0; i < (width) * (height); i++) {
+    fprintf(fp, "P3\n%d %d\n255\n", WIDTH, HEIGHT);
+    for (size_t i = 0; i < TOTALSIZE; i++)
+    {
         fprintf(fp, "%d %d %d\n", data[i].r, data[i].g, data[i].b);
     }
     fclose(fp);
 }
 
-/*void create_image(const char *filename, int width, int height) {
-    FILE *fp = fopen(filename, "w");
-    if (!fp) {
-        perror("Save file open failed");
-        exit(EXIT_FAILURE);
-    }
-    fprintf(fp, "P3\n%d %d\n255\n", width, height);
-    fclose(fp);
-}*/
+int main()
+{
+    upc_tick_t time_start, time_end;
+    double time_elapsed;
+    char inname[] = "mona-lisa-p3.ppm";
+    char outname[] = "mona-lisa-corrected.ppm";
 
-int main(int argc, char **argv) {
-
-    upc_barrier;
-    char inname[] = "solid-color-image-p3.ppm";
-
-    Pixel *local_image = NULL;
     if (MYTHREAD == 0) {
+        Pixel *local_image;
         load_ppm(inname, &local_image);
-    }
-
-    // Broadcast image size
-    //upc_all_broadcast(&width, &width, sizeof(int), 0);
-    //upc_all_broadcast(&height, &height, sizeof(int), 0);
-    size_t img_size = (width) * (height);
-    printf("thread %d here with im_size = %zu\n", MYTHREAD, img_size);
-    // Allocate shared array
-    image_data = upc_all_alloc(img_size, sizeof(Pixel));
-
-    // Master thread copies loaded data to shared memory
-    if (MYTHREAD == 0) {
-        for (size_t i = 0; i < img_size; i++) {
-            image_data[i] = local_image[i];
-        }
+        upc_memput(image_data, local_image, TOTALSIZE * sizeof(Pixel));
         free(local_image);
+
+        printf("Image loaded from: %s\n", inname);
+        printf("Image dimensions: %dx%d\n", WIDTH, HEIGHT);
+        printf("Image size: %d pixels\n", TOTALSIZE);
     }
 
     upc_barrier;
-
-    // Parallel image inversion
-    for (size_t i = MYTHREAD; i < img_size; i += THREADS) {
-        image_data[i].r = 255 - image_data[i].r;
-        image_data[i].g = 255 - image_data[i].g;
-        image_data[i].b = 255 - image_data[i].b;
-        //printf("Thread %d inverted pixel %zu\n", MYTHREAD, i);
-    }
-
+    time_start = upc_ticks_now();
+    upc_forall(int i = 0; i<TOTALSIZE; i++; i)
+        image_data[i] = applyGammaCorrection(image_data[i]);
+    time_end = upc_ticks_now();
     upc_barrier;
-///*
 
-    // Master gathers data and saves
+    time_elapsed = upc_ticks_to_ns(time_end - time_start);
+    if(MYTHREAD==0) {
+        printf("Elapsed time for main calculation in milliseconds:\n");
+    }
+    printf("Thread %d - %f milliseconds\n", MYTHREAD, time_elapsed/1000000.0);
+
     if (MYTHREAD == 0) {
-        Pixel *output = malloc(sizeof(Pixel) * img_size);
-        for (size_t i = 0; i < img_size; i++) {
-            output[i] = image_data[i];
-        }
-
-        // Construct new filename
-        char outname[] = "image-inverted.ppm";
-        
-
-        save_ppm(outname, output);
+        save_ppm(outname, image_data);
         printf("Inverted image saved as: %s\n", outname);
-        free(output);
+        
     }
-
-    upc_barrier;
-    //*/
     upc_free(image_data);
 
     return 0;

@@ -33,18 +33,18 @@ void bubble_sort() {
     int start = MYTHREAD * (N / THREADS);
     int end = start + N/THREADS;
     printf("Thread %d sorting from %d to %d\n", MYTHREAD, start, end);
-    
+
     for (phase = 0; phase < N; phase++) {
         for (int i = start; i < end - 1; i++) {
             if (local_array[i] > local_array[i + 1]) {
-                    // Swap
+                // Swap
                 temp = local_array[i];
                 local_array[i] = local_array[i + 1];
                 local_array[i + 1] = temp;
             }
         }
     }
-        verify_sorted();
+    verify_sorted();
     
 
 }
@@ -64,13 +64,13 @@ int main() {
         for(int i = 0; i < N; i++) 
             array[i] = LOWER_BOUND + (rand_r(seed) % (UPPER_BOUND - LOWER_BOUND + 1));
 
-    }      
+    }
     upc_barrier;
     time_start = upc_ticks_now();
-    upc_all_scatter(local_array, array, sizeof(int)*(N/THREADS), UPC_IN_NOSYNC | UPC_OUT_NOSYNC);
+    upc_all_scatter(local_array, array, sizeof(int)*(N/THREADS), UPC_IN_ALLSYNC | UPC_OUT_ALLSYNC);
     upc_barrier;
     bubble_sort();
-    upc_all_gather(array, local_array, sizeof(int)*(N/THREADS), UPC_IN_NOSYNC | UPC_OUT_NOSYNC);
+    upc_all_gather(array, local_array, sizeof(int)*(N/THREADS), UPC_IN_ALLSYNC | UPC_OUT_ALLSYNC);
     time_end = upc_ticks_now();
     time_elapsed = upc_ticks_to_ns(time_end - time_start);
     if (MYTHREAD == 0) {

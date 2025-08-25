@@ -30,54 +30,83 @@ shared [] Individual new_population[POP_SIZE];
 shared [POP_SIZE] Individual population[POP_SIZE*THREADS];
 unsigned int * seed;
 
-// Optymalizowana funkcja
+
 double evaluate(const double *x) {
     double sum = 0.0;
     for (int i = 0; i < DIM; ++i)
         sum += x[i]*x[i];
+    //printf("Thread %d evaluated fitness: %f with first value: %f\n", MYTHREAD, sum, x[0]);
     return sum+100.0;
 }
 
-// Selekcja turniejowa
 int tournament_select(shared Individual *pop, int pop_per_thread) {
     int a = rand_r(seed) % pop_per_thread;
     int b = rand_r(seed) % pop_per_thread;
     return (pop[MYTHREAD*POP_SIZE + MYTHREAD * pop_per_thread + a].fitness <
             pop[MYTHREAD*POP_SIZE + MYTHREAD * pop_per_thread + b].fitness) ? a : b;
+    //return (pop[MYTHREAD * pop_per_thread + a].fitness <
+    //        pop[MYTHREAD * pop_per_thread + b].fitness) ? a : b;
 }
 
 // Krzyżowanie
 void crossover(const Individual *p1, const Individual *p2, Individual *child) {
-    for (int i = 0; i < DIM; i++) 
+    for (int i = 0; i < DIM; i++) {
         child->genes[i] = (((double)rand_r(seed) / RAND_MAX) < 0.5) ? p1->genes[i] : p2->genes[i];
+    }
 }
 
 // Mutacja
 void mutate(Individual *ind) {
-    for (int i = 0; i < DIM; i++) 
+    //printf("Thread %d: input value to mutate: %f\n", MYTHREAD, ind->genes[0]);
+    fflush(stdout);
+    for (int i = 0; i < DIM; i++) {
+        //ind->genes[i] += 0.1;
+        // Use thread-local seed
         if (((double)rand_r(seed) / RAND_MAX) < MUTATION_RATE) {
+            //double mutation_amount = (double)rand_r(seed)/RAND_MAX - 0.5; // Random value in range [-0.5, 0.5]
             double mutation_amount = 0.1 * ((double)rand_r(seed)/RAND_MAX - 0.5);
             ind->genes[i] += mutation_amount;
+            //printf("Thread %d: mutated gene %d by %f\n", MYTHREAD, i, mutation_amount);
             if (ind->genes[i] > UPPER_BOUND) ind->genes[i] = UPPER_BOUND;
             if (ind->genes[i] < LOWER_BOUND) ind->genes[i] = LOWER_BOUND;
         }
+/*         else
+            printf("Thread %d skipped mutation of gene %d\n", MYTHREAD, i); */
+    }
+    //printf("Thread %d: output value to mutate: %f\n", MYTHREAD, ind->genes[0]);
+    fflush(stdout);
 }
 
+double rand_double(double min, double max) {
+    return min + ((double)rand_r(seed) / RAND_MAX) * (max - min);
+}
+
+/*void init_individuals(shared Individual *pop) {
+
+        for (int i = MYTHREAD; i < POP_SIZE; i+=THREADS)  {
+            for(int j = 0; j < DIM; j++) {
+                pop[i].genes[j] = rand_double(LOWER_BOUND, UPPER_BOUND);  
+            }
+            printf("thread %d initied individual %d with first value: %f\n", MYTHREAD, i, pop[i].genes[0]);
+            pop[i].fitness = evaluate(pop[i].genes);
+        }
+    
+
+    return;
+}*/
+
+
 int main() {
-    // Inicjalizacja ziarna losowego (prywatnie dla każdego wątku)
     seed = (unsigned int *)malloc(sizeof(unsigned int));
     *seed = time(NULL)*1234 + MYTHREAD;
     srand(*seed);
-
-    // Zmienne pomocnicze
+    
     upc_tick_t time_start, time_end;
     double time_elapsed;
     int pop_per_thread = POP_SIZE / THREADS;
     int start = (MYTHREAD*POP_SIZE) + (MYTHREAD*pop_per_thread);
     int end = start + pop_per_thread;
     upc_barrier;
-
-    // Inicjalizacja pierwszej populacji
     if (MYTHREAD == 0) {
          printf("Initial data:\n");
         printf("Thread %d: Local  size = %llu\n", MYTHREAD, upc_localsizeof(new_population));
@@ -91,11 +120,13 @@ int main() {
         }
         printf("\n\n");
     }
-    
-    // Rozgłoszenie populacji początkowej
     upc_barrier;
-    upc_all_broadcast(population, new_population, sizeof(Individual)*POP_SIZE, UPC_IN_NOSYNC | UPC_OUT_NOSYNC);
 
+    upc_all_broadcast(population, new_population, sizeof(Individual)*POP_SIZE, UPC_IN_ALLSYNC | UPC_OUT_ALLSYNC);
+
+
+    //algorytm genetyczny:
+    
     // Alokacja zamka do kontroli dostępu do zmiennych współdzielonych
     upc_lock_t *lock = upc_all_lock_alloc();
     time_start = upc_ticks_now();
@@ -131,7 +162,8 @@ int main() {
             new_population[0] = elite;
         //Synchronizacja wątków, by uniknąć konfliktów przy zapisie do współdzielonej populacji
         upc_barrier;
-        upc_all_broadcast(population, new_population, sizeof(Individual)*POP_SIZE, UPC_IN_NOSYNC | UPC_OUT_NOSYNC);
+        //upc_all_broadcast(population, new_population, sizeof(Individual)*POP_SIZE, UPC_IN_NOSYNC | UPC_OUT_NOSYNC);
+        upc_all_broadcast(population, new_population, sizeof(Individual)*POP_SIZE, UPC_IN_ALLSYNC | UPC_OUT_ALLSYNC);
         upc_barrier;
         fflush(stdout);
         /* if (MYTHREAD == 0) {

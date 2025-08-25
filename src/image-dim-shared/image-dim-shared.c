@@ -4,14 +4,22 @@
 #include <string.h>
 #include <math.h>
 #include <upc_tick.h>
+#include <upc_relaxed.h>
 
 #define GAMMA 2.0f
+#define WIDTH 2000
+#define HEIGHT 2980
+#define TOTALSIZE (WIDTH * HEIGHT)
+#define NELEMS (TOTALSIZE/(THREADS))
 
 // Struktura przechowujaca dane piksela
 typedef struct
 {
     unsigned int r, g, b;
 } Pixel;
+
+// Wszystkie dane sa przechowywane w pamieci wspoldzielonej
+shared [] Pixel * image_data;
 
 Pixel applyGammaCorrection(Pixel p)
 {
@@ -23,13 +31,6 @@ Pixel applyGammaCorrection(Pixel p)
     corrected.b = (unsigned int)(255.0 * pow((double)p.b / 255.0, GAMMA));
     return corrected;
 }
-
-// Wszystkie dane sa przechowywane w pamieci wspoldzielonej
-shared Pixel *image_data;
-shared const int width= 2000, height = 2980;
-shared size_t img_size;
-//Pomiar czasu przy pomocy biblioteki UPC
-int local_start, local_end;
 
 // Funkcja wczytujaca obraz z pliku PPM
 //Funkcja zaklada, ze obraz nie posiada komentarzy
@@ -59,8 +60,8 @@ void load_ppm(const char *filename, Pixel **data)
         exit(EXIT_FAILURE);
     }
     
-    *data = malloc(sizeof(Pixel) * img_size);
-    for (size_t i = 0; i < img_size; i++)
+    *data = malloc(sizeof(Pixel) * file_width * file_height);
+    for (size_t i = 0; i < (size_t)(file_width * file_height); i++)
     {
         int r, g, b;
         int ret=fscanf(fp, "%d %d %d", &r, &g, &b);
@@ -77,7 +78,7 @@ void load_ppm(const char *filename, Pixel **data)
     fclose(fp);
 }
 
-void save_ppm(const char *filename, shared Pixel *data)
+void save_ppm(const char *filename, shared [] Pixel *data)
 {
     FILE *fp = fopen(filename, "w");
     if (!fp)
@@ -85,8 +86,8 @@ void save_ppm(const char *filename, shared Pixel *data)
         perror("Save file open failed");
         exit(EXIT_FAILURE);
     }
-    fprintf(fp, "P3\n%d %d\n255\n", width, height);
-    for (size_t i = 0; i < img_size; i++)
+    fprintf(fp, "P3\n%d %d\n255\n", WIDTH, HEIGHT);
+    for (size_t i = 0; i < TOTALSIZE; i++)
     {
         fprintf(fp, "%d %d %d\n", data[i].r, data[i].g, data[i].b);
     }
@@ -95,41 +96,26 @@ void save_ppm(const char *filename, shared Pixel *data)
 
 int main()
 {
-    
     upc_tick_t time_start, time_end;
     double time_elapsed;
     char inname[] = "mona-lisa-p3.ppm";
     char outname[] = "mona-lisa-corrected.ppm";
 
-    img_size = width * height;
-    Pixel *local_image = NULL;
-    if (MYTHREAD == 0)
-    {
-        
+    if (MYTHREAD == 0) {
+        Pixel *local_image;
         load_ppm(inname, &local_image);
-    }
-    image_data = upc_all_alloc(img_size, sizeof(Pixel));
-    
-    if (MYTHREAD == 0)
-    {
-        for (size_t i = 0; i < img_size; i++)
-        {
-            image_data[i] = local_image[i];
-        }
+        upc_memput(image_data, local_image, TOTALSIZE * sizeof(Pixel));
         free(local_image);
+
         printf("Image loaded from: %s\n", inname);
-        printf("Image dimensions: %dx%d\n", width, height);
-        printf("Image size: %zu pixels\n", img_size);
-
+        printf("Image dimensions: %dx%d\n", WIDTH, HEIGHT);
+        printf("Image size: %d pixels\n", TOTALSIZE);
     }
-
+    
     upc_barrier;
     time_start = upc_ticks_now();
-    
-    // Parallel image inversion
-    for (size_t i = MYTHREAD; i < img_size; i += THREADS) {
+    upc_forall(int i = 0; i<TOTALSIZE; i++; i)
         image_data[i] = applyGammaCorrection(image_data[i]);
-    }
     time_end = upc_ticks_now();
     upc_barrier;
 
@@ -138,13 +124,13 @@ int main()
         printf("Elapsed time for main calculation in milliseconds:\n");
     }
     printf("Thread %d - %f milliseconds\n", MYTHREAD, time_elapsed/1000000.0);
-    // Master gathers data and saves
+
     if (MYTHREAD == 0) {
-        // Save directly from shared image_data
         save_ppm(outname, image_data);
         printf("Inverted image saved as: %s\n", outname);
-        upc_free(image_data);
+        
     }
+    upc_free(image_data);
 
     return 0;
 }

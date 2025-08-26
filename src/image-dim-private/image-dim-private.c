@@ -123,6 +123,7 @@ int main()
 
     time_elapsed = upc_ticks_to_ns(time_end - time_start);
     average_time += time_elapsed;
+    upc_barrier;
     if(MYTHREAD==0) {
         printf("Elapsed time for main calculation in milliseconds:\n");
     }

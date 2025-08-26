@@ -20,7 +20,6 @@ typedef struct
 
 // Wszystkie dane sa przechowywane w pamieci wspoldzielonej
 shared [] Pixel * image_data;
-shared int time_elapsed[THREADS];
 
 Pixel applyGammaCorrection(Pixel p)
 {
@@ -99,7 +98,6 @@ int main()
 {
     upc_tick_t time_start, time_end;
     double time_elapsed;
-    average_time = 0;
     char inname[] = "mona-lisa-p3.ppm";
     char outname[] = "mona-lisa-corrected.ppm";
 
@@ -121,20 +119,12 @@ int main()
     time_end = upc_ticks_now();
     upc_barrier;
 
-    time[MYTHREAD] = upc_ticks_to_ns(time_end - time_start);
-    upc_barrier;
+    time_elapsed = upc_ticks_to_ns(time_end - time_start);
     if(MYTHREAD==0) {
         printf("Elapsed time for main calculation in milliseconds:\n");
     }
-    printf("Thread %d - %f milliseconds\n", MYTHREAD, time[MYTHREAD]/1000000.0);
-    fflush(stdout);
-    if(MYTHREAD==0) {
-        double average_time = 0.0;
-        for (int i = 0; i < THREADS; i++) {
-            average_time += time[i];
-        }
-        printf("Average time for main calculation in milliseconds: %f\n", average_time/(1000000.0 * THREADS));
-    }
+    printf("Thread %d - %f milliseconds\n", MYTHREAD, time_elapsed/1000000.0);
+
     if (MYTHREAD == 0) {
         save_ppm(outname, image_data);
         printf("Inverted image saved as: %s\n", outname);

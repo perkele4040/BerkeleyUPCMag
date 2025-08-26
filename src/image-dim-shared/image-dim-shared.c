@@ -20,7 +20,6 @@ typedef struct
 
 // Wszystkie dane sa przechowywane w pamieci wspoldzielonej
 shared [] Pixel * image_data;
-shared int average_time;
 
 Pixel applyGammaCorrection(Pixel p)
 {
@@ -99,7 +98,6 @@ int main()
 {
     upc_tick_t time_start, time_end;
     double time_elapsed;
-    average_time = 0;
     char inname[] = "mona-lisa-p3.ppm";
     char outname[] = "mona-lisa-corrected.ppm";
 
@@ -122,15 +120,10 @@ int main()
     upc_barrier;
 
     time_elapsed = upc_ticks_to_ns(time_end - time_start);
-    average_time += time_elapsed;
-    upc_barrier;
     if(MYTHREAD==0) {
         printf("Elapsed time for main calculation in milliseconds:\n");
     }
     printf("Thread %d - %f milliseconds\n", MYTHREAD, time_elapsed/1000000.0);
-    fflush(stdout);
-    if(MYTHREAD==0)
-        printf("Average time for main calculation in milliseconds: %f\n", average_time/THREADS);
 
     if (MYTHREAD == 0) {
         save_ppm(outname, image_data);

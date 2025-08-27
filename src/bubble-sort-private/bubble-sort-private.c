@@ -6,7 +6,7 @@
 #include <upc_strict.h>
 #include <upc_collective.h>
 
-#define N 10000 // Global size of array
+#define N 2000 // Global size of array
 #define LOWER_BOUND -1000
 #define UPPER_BOUND 1000
 

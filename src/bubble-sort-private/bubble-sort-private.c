@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <upc_tick.h>
-#include <upc_relaxed.h>
+#include <upc_strict.h>
 #include <upc_collective.h>
 
 #define N 10000 // Global size of array

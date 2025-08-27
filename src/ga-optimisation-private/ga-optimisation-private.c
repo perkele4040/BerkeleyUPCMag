@@ -12,7 +12,7 @@
 
 #define POP_SIZE 200    // Rozmiar populacji
 #define DIM 10  // Ilość zmiennych osobnika
-#define GENERATIONS 1000    // Ilość pokoleń
+#define GENERATIONS 10000    // Ilość pokoleń
 #define MUTATION_RATE 0.05   // Współczynnik mutacji
 #define CROSSOVER_RATE 0.8  // Współczynnik krzyżowania
 #define LOWER_BOUND -5.0    // Dolna granica poszukiwań

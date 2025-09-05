@@ -62,11 +62,14 @@ int main() {
             src[i] = MIN_VAL + ((double)rand_r(seed) / RAND_MAX) * (MAX_VAL - MIN_VAL);
     upc_barrier;
     time_start = upc_ticks_now();
-    upc_all_broadcast(dst, src, sizeof(double)*ARRAY_SIZE, UPC_IN_MYSYNC | UPC_OUT_MYSYNC);
-    upc_barrier;
-    quicksort((double *)&dst[dst_start], 0, chunk_size - 1);
-    upc_all_exchange(dst, &dst[dst_start],  sizeof(double) * chunk_size, UPC_IN_MYSYNC | UPC_OUT_MYSYNC);
+    upc_all_scatter(dst, src, sizeof(double)*ARRAY_SIZE, UPC_IN_MYSYNC | UPC_OUT_MYSYNC);
     time_end = upc_ticks_now();
+    upc_barrier;
+    
+    quicksort((double *)&dst[dst_start], 0, chunk_size - 1);
+    
+    upc_all_gather(dst, &dst[dst_start],  sizeof(double) * chunk_size, UPC_IN_MYSYNC | UPC_OUT_MYSYNC);
+    
     upc_barrier;
 
     // Verify if the local subarray is sorted

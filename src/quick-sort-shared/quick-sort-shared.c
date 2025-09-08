@@ -7,11 +7,8 @@
 #include <upc_relaxed.h>
 
 #define N 400000
-#define MAX_VAL 100
-#define MIN_VAL -100
-
-#define RAND_VAL (MIN_VAL + ((double)rand_r(ziarno) / RAND_MAX) * (MAX_VAL - MIN_VAL))
-#define PRINT_FMT "%f "
+#define MAX_VAL 1000
+#define MIN_VAL -1000
 
 shared [] double dane[N];
 shared [N] double dane_lokalne[THREADS][N];
@@ -22,6 +19,9 @@ void swap(double *a, double *b) {
     *a = *b;
     *b = temp;
 }
+
+#define RAND_VAL (MIN_VAL + ((double)rand_r(ziarno) / RAND_MAX) * (MAX_VAL - MIN_VAL))
+#define PRINT_FMT "%f 
 
 int partition(double *arr, int low, int high) {
     double pivot = arr[high];
@@ -60,15 +60,11 @@ int main() {
 
     czas_start = upc_ticks_now();
     upc_all_broadcast(dane_lokalne, dane, sizeof(double)*N, UPC_IN_MYSYNC | UPC_OUT_MYSYNC);
-
-    upc_barrier;
     quicksort((double *)&dane_lokalne[MYTHREAD][start], 0, N/THREADS-1);
-    upc_barrier;
-
     upc_all_gather_all(dane_lokalne, &dane_lokalne[MYTHREAD][start],  sizeof(double) * (N/THREADS), UPC_IN_MYSYNC | UPC_OUT_MYSYNC);
-
-
     czas_stop = upc_ticks_now();
+
+    
     upc_barrier;
 
     if(MYTHREAD==0){

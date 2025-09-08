@@ -6,25 +6,26 @@
 #include <upc_strict.h>
 #include <upc_collective.h>
 
-#define N 4000 // Global size of array
+
 #define LOWER_BOUND -1000
 #define UPPER_BOUND 1000
 
-// Shared array of integers
-shared [] int array[N];
-shared [N/THREADS] int local_array[N];
-unsigned int * seed;
+#define N 4000
+
+shared [] int dane[N];
+shared [N/THREADS] int dane_lokalne[N];
+
+
+unsigned int * ziarno;
 
 void verify_sorted() {
     int start = MYTHREAD * (N / THREADS);
     int end = start + N/THREADS;
     for (int i = start; i < end-1; i++) {
-        if (local_array[i] > local_array[i + 1]) {
-            printf("Subarray of thread %d is not sorted at index %d: %d > %d\n", MYTHREAD, i, local_array[i], local_array[i + 1]);
+        if (dane_lokalne[i] > dane_lokalne[i + 1]) {
             return;
         }
     }
-    printf("Subarray of thread %d is sorted correctly.\n", MYTHREAD);
 }
 
 void bubble_sort() {
@@ -36,11 +37,11 @@ void bubble_sort() {
 
     for (phase = 0; phase < N; phase++) {
         for (int i = start; i < end - 1; i++) {
-            if (local_array[i] > local_array[i + 1]) {
+            if (dane_lokalne[i] > dane_lokalne[i + 1]) {
                 // Swap
-                temp = local_array[i];
-                local_array[i] = local_array[i + 1];
-                local_array[i + 1] = temp;
+                temp = dane_lokalne[i];
+                dane_lokalne[i] = dane_lokalne[i + 1];
+                dane_lokalne[i + 1] = temp;
             }
         }
     }
@@ -51,33 +52,37 @@ void bubble_sort() {
 
 int main() {
     // Inicjalizacja ziarna losowego
-    seed = (unsigned int *)malloc(sizeof(unsigned int));
-    *seed = time(NULL)*1234 + MYTHREAD;
-    srand(*seed);
+    ziarno = (unsigned int *)malloc(sizeof(unsigned int));
+    *ziarno = time(NULL)*1234 + MYTHREAD;
+    srand(*ziarno);
 
     // Zmienne pomocnicze do pomiaru czasu
-    upc_tick_t time_start, time_end;
-    double time_elapsed;
+    upc_tick_t czas_start, czas_stop;
+    double czas;
     
     // Inicjalizacja tabeli początkowej
     if(MYTHREAD==0) {
         for(int i = 0; i < N; i++) 
-            array[i] = LOWER_BOUND + (rand_r(seed) % (UPPER_BOUND - LOWER_BOUND + 1));
+            dane[i] = LOWER_BOUND + (rand_r(ziarno) % (UPPER_BOUND - LOWER_BOUND + 1));
 
     }
     upc_barrier;
-    time_start = upc_ticks_now();
-    upc_all_scatter(local_array, array, sizeof(int)*(N/THREADS), UPC_IN_ALLSYNC | UPC_OUT_ALLSYNC);
+
+    
+    czas_start = upc_ticks_now();
+    upc_all_scatter(dane_lokalne, dane, sizeof(int)*(N/THREADS), UPC_IN_ALLSYNC | UPC_OUT_ALLSYNC);
     upc_barrier;
     bubble_sort();
-    upc_all_gather(array, local_array, sizeof(int)*(N/THREADS), UPC_IN_ALLSYNC | UPC_OUT_ALLSYNC);
-    time_end = upc_ticks_now();
-    time_elapsed = upc_ticks_to_ns(time_end - time_start);
+    upc_all_gather(dane, dane_lokalne, sizeof(int)*(N/THREADS), UPC_IN_ALLSYNC | UPC_OUT_ALLSYNC);
+    czas_stop = upc_ticks_now();
+
+    
+    czas = upc_ticks_to_ns(czas_stop - czas_start)/1000000.0;
     if (MYTHREAD == 0) {
         printf("\nElapsed time for main calculation in milliseconds:\n");
         fflush(stdout);
     }
     upc_barrier;
-    printf("Thread %d - %f milliseconds\n", MYTHREAD, time_elapsed/1000000.0);
+    printf("Thread %d - %f milliseconds\n", MYTHREAD, czas);
     return 0;
 }

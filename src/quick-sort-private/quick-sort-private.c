@@ -56,12 +56,12 @@ int main() {
     upc_barrier;
 
     czas_start = upc_ticks_now();
-    upc_all_scatter(dane_lokalne, dane, sizeof(double) * (N/THREADS), UPC_IN_ALLSYNC | UPC_OUT_ALLSYNC);
+    upc_all_scatter(dane_lokalne, dane, sizeof(double) * (N/THREADS), UPC_IN_MYSYNC | UPC_OUT_MYSYNC);
     quicksort((double *)&dane_lokalne[start], 0, N/THREADS-1);
     upc_all_gather(dane, dane_lokalne,  sizeof(double) * (N/THREADS), UPC_IN_MYSYNC | UPC_OUT_MYSYNC);
     czas_stop = upc_ticks_now();
 
-    
+
     upc_barrier;
 
     int is_sorted = 1;

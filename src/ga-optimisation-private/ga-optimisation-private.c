@@ -14,8 +14,8 @@
 #define MAX_EPOK 10000    // Ilość pokoleń
 #define SZANSA_MUTACJI 0.05   // Współczynnik mutacji
 #define SZANSA_KRZYZOWANIA 0.8  // Współczynnik krzyżowania
-#define LOWER_BOUND -5.0    // Dolna granica poszukiwań
-#define UPPER_BOUND 5.0     // Górna granica poszukiwań
+#define MIN -5.0    // Dolna granica poszukiwań
+#define MAX 5.0     // Górna granica poszukiwań
 
 shared double najlepsza_ocena = DBL_MAX;
 shared double najlepsze_geny[IL_GENOW];
@@ -25,8 +25,6 @@ typedef struct {
 } Osobnik;
 shared [] Osobnik nowa_populacja[IL_OSOBNIKOW];
 shared [IL_OSOBNIKOW] Osobnik populacja[IL_OSOBNIKOW*THREADS];
-
-
 unsigned int * ziarno;
 
 // Optymalizowana funkcja
@@ -54,8 +52,8 @@ void mutate(Osobnik *ind) {
         if (((double)rand_r(ziarno) / RAND_MAX) < SZANSA_MUTACJI) {
             double mutation_amount = 0.1 * ((double)rand_r(ziarno)/RAND_MAX - 0.5);
             ind->geny[i] += mutation_amount;
-            if (ind->geny[i] > UPPER_BOUND) ind->geny[i] = UPPER_BOUND;
-            if (ind->geny[i] < LOWER_BOUND) ind->geny[i] = LOWER_BOUND;
+            if (ind->geny[i] > MAX) ind->geny[i] = MAX;
+            if (ind->geny[i] < MIN) ind->geny[i] = MIN;
         }
 }
 
@@ -73,7 +71,7 @@ int main() {
     if (MYTHREAD == 0) {
         for (int i = 0; i < IL_OSOBNIKOW; i++) {
             for(int j = 0; j < IL_GENOW; j++)
-                nowa_populacja[i].geny[j] = LOWER_BOUND + ((double)rand_r(ziarno) / RAND_MAX) * (UPPER_BOUND - LOWER_BOUND);
+                nowa_populacja[i].geny[j] = MIN + ((double)rand_r(ziarno) / RAND_MAX) * (MAX - MIN);
             nowa_populacja[i].ocena = evaluate(nowa_populacja[i].geny);
         }
     }

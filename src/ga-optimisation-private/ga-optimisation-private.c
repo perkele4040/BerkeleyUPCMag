@@ -1,4 +1,3 @@
-#include <upc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -38,7 +37,6 @@ double evaluate(const double *x) {
     return sum+100.0;
 }
 
-// Selekcja turniejowa
 int tournament_select(shared Osobnik *pop, int os_na_watek) {
     int a = rand_r(ziarno) % os_na_watek;
     int b = rand_r(ziarno) % os_na_watek;
@@ -46,13 +44,11 @@ int tournament_select(shared Osobnik *pop, int os_na_watek) {
             pop[MYTHREAD*IL_OSOBNIKOW + MYTHREAD * os_na_watek + b].ocena) ? a : b;
 }
 
-// Krzyżowanie
 void crossover(const Osobnik *p1, const Osobnik *p2, Osobnik *nowy) {
     for (int i = 0; i < IL_GENOW; i++) 
         nowy->geny[i] = (((double)rand_r(ziarno) / RAND_MAX) < 0.5) ? p1->geny[i] : p2->geny[i];
 }
 
-// Mutacja
 void mutate(Osobnik *ind) {
     for (int i = 0; i < IL_GENOW; i++) 
         if (((double)rand_r(ziarno) / RAND_MAX) < SZANSA_MUTACJI) {
@@ -64,39 +60,28 @@ void mutate(Osobnik *ind) {
 }
 
 int main() {
-    // Inicjalizacja ziarna losowego (prywatnie dla każdego wątku)
     ziarno = (unsigned int *)malloc(sizeof(unsigned int));
     *ziarno = time(NULL)*1234 + MYTHREAD;
     srand(*ziarno);
-    
-    // Zmienne pomocnicze
+
     upc_tick_t czas_start, czas_stop;
     double czas;
     int os_na_watek = IL_OSOBNIKOW / THREADS;
     int start = (MYTHREAD*IL_OSOBNIKOW) + (MYTHREAD*os_na_watek);
     int stop = start + os_na_watek;
-    upc_barrier;
 
-    // Inicjalizacja pierwszej populacji
     if (MYTHREAD == 0) {
-         printf("Initial data:\n");
-        printf("Thread %d: Local  size = %llu\n", MYTHREAD, upc_localsizeof(nowa_populacja));
-        printf("Thread %d: Block  size = %llu\n", MYTHREAD, upc_blocksizeof(nowa_populacja));
-        printf("Thread %d: Elem size = %llu\n", MYTHREAD, upc_elemsizeof(nowa_populacja));
         for (int i = 0; i < IL_OSOBNIKOW; i++) {
             for(int j = 0; j < IL_GENOW; j++)
                 nowa_populacja[i].geny[j] = LOWER_BOUND + ((double)rand_r(ziarno) / RAND_MAX) * (UPPER_BOUND - LOWER_BOUND);
             nowa_populacja[i].ocena = evaluate(nowa_populacja[i].geny);
-            printf("%f ", nowa_populacja[i].geny[0]);
         }
-        printf("\n\n");
     }
 
     upc_lock_t *zamek = upc_all_lock_alloc();
-    upc_barrier;
 
-    upc_all_broadcast(populacja, nowa_populacja, sizeof(Osobnik)*IL_OSOBNIKOW, UPC_IN_ALLSYNC | UPC_OUT_ALLSYNC);
     czas_start = upc_ticks_now();
+    upc_all_broadcast(populacja, nowa_populacja, sizeof(Osobnik)*IL_OSOBNIKOW, UPC_IN_ALLSYNC | UPC_OUT_ALLSYNC);
     for (int gen = 0; gen < MAX_EPOK; gen++) {
         Osobnik elita = populacja[0];
         for (int i = 1; i < IL_OSOBNIKOW; i++) {
@@ -113,7 +98,6 @@ int main() {
                 nowy = populacja[p1_idx];
             mutate(&nowy);
             nowy.ocena = evaluate(nowy.geny);
-            fflush(stdout);
             nowa_populacja[i-start] = nowy;
 
             upc_lock(zamek);
@@ -131,9 +115,7 @@ int main() {
     }
     czas_stop = upc_ticks_now();
 
-    upc_barrier;
-    czas = upc_ticks_to_ns(czas_stop - czas_start);
-
+    czas = upc_ticks_to_ns(czas_stop - czas_start)/1000000.0;
     if (MYTHREAD == 0) {
         
         printf("Najlepsza ocena: %f\n", najlepsza_ocena);
@@ -141,8 +123,8 @@ int main() {
         for (int i = 0; i < IL_GENOW; i++) {
             printf("%f ", najlepsze_geny[i]);
         }
-        printf("\nCzasy przetwarzania:\n");
+        printf("\nCzasy wykonania w milisekundach:\n");
         fflush(stdout);
     }
-    printf("Watek %d - %f milisekund\n", MYTHREAD, czas/1000000.0);
+    printf("Watek %d - %f milisekund\n", MYTHREAD, czas);
 }

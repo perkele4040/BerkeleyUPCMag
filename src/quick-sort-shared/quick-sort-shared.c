@@ -1,4 +1,3 @@
-#include <upc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -7,8 +6,8 @@
 #include <upc_relaxed.h>
 
 #define N 400000
-#define MAX_VAL 1000
-#define MIN_VAL -1000
+#define MAX 1000
+#define MIN -1000
 
 shared [] double dane[N];
 shared [N] double dane_lokalne[THREADS][N];
@@ -19,9 +18,6 @@ void swap(double *a, double *b) {
     *a = *b;
     *b = temp;
 }
-
-#define RAND_VAL (MIN_VAL + ((double)rand_r(ziarno) / RAND_MAX) * (MAX_VAL - MIN_VAL))
-#define PRINT_FMT "%f 
 
 int partition(double *arr, int low, int high) {
     double pivot = arr[high];
@@ -54,8 +50,8 @@ int main() {
     int stop = start + N/THREADS;
 
     if(MYTHREAD==0)
-        for(int i = 0; i < N; i++)
-            dane[i] = RAND_VAL;
+        for(int i = 0; i < N; i++) 
+            dane[i] = MIN + ((double)rand_r(ziarno) / RAND_MAX) * (MAX - MIN);
     upc_barrier;
 
     czas_start = upc_ticks_now();
@@ -63,29 +59,13 @@ int main() {
     quicksort((double *)&dane_lokalne[MYTHREAD][start], 0, N/THREADS-1);
     upc_all_gather_all(dane_lokalne, &dane_lokalne[MYTHREAD][start],  sizeof(double) * (N/THREADS), UPC_IN_MYSYNC | UPC_OUT_MYSYNC);
     czas_stop = upc_ticks_now();
-
     
     upc_barrier;
-
-    if(MYTHREAD==0){
-        int is_sorted=1;
-        for(int i = 0; i< THREADS; i++) {
-            for(int j = 0; j < N-1; j++) {
-                if(dane_lokalne[i][j] > dane_lokalne[i][j+1] && (j+1)%(N/THREADS) != 0) {
-
-                    is_sorted=0;
-                    printf("Watek %d: el. %d = %f < %f = el. %d !!!\n", i, j, dane_lokalne[i][j], dane_lokalne[i][j+1], j+1);
-                    //break;
-                }
-            }
-        }
-    }
-
-    czas = upc_ticks_to_ns(czas_stop - czas_start);
+    czas = upc_ticks_to_ns(czas_stop - czas_start)/1000000.0;
     if (MYTHREAD == 0) 
-        printf("Elapsed time for main calculation in milliseconds:\n");
+        printf("Czas wykonania w milisekundach:\n");
         fflush(stdout);
-    printf("Thread %d - %f milliseconds\n", MYTHREAD, czas/1000000.0);
+    printf("Wątek %d - %f milisekund\n", MYTHREAD, czas);
 
     return 0;
 }

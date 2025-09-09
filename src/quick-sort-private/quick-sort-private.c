@@ -1,4 +1,3 @@
-#include <upc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -7,8 +6,8 @@
 #include <upc_relaxed.h>
 
 #define N 400000
-#define MAX_VAL 1000
-#define MIN_VAL -1000
+#define MAX 1000
+#define MIN -1000
 
 shared [] double dane[N];
 shared [N/THREADS] double dane_lokalne[N];
@@ -52,7 +51,7 @@ int main() {
 
     if(MYTHREAD==0) 
         for(int i = 0; i < N; i++)
-            dane[i] = MIN_VAL + ((double)rand_r(ziarno) / RAND_MAX) * (MAX_VAL - MIN_VAL);
+            dane[i] = MIN + ((double)rand_r(ziarno) / RAND_MAX) * (MAX - MIN);
     upc_barrier;
 
     czas_start = upc_ticks_now();
@@ -61,31 +60,12 @@ int main() {
     upc_all_gather(dane, dane_lokalne,  sizeof(double) * (N/THREADS), UPC_IN_MYSYNC | UPC_OUT_MYSYNC);
     czas_stop = upc_ticks_now();
 
-
     upc_barrier;
-
-    int is_sorted = 1;
-    for (int i = start; i < stop - 1; i++) {
-        //if (((double *)dane_lokalne)[i] > ((double *)dane_lokalne)[i + 1]) {
-        if( dane[i] > dane[i + 1]) {
-            is_sorted = 0;
-            printf("Thread %d: el. %d = %f < %f = el. %d !!!\n", MYTHREAD, i, dane[i], dane[i + 1], i + 1);
-            break;
-        }
-    }
-    if (is_sorted) {
-        printf("Subarray of thread %d is sorted correctly\n", MYTHREAD);
-    } else {
-        printf("Subarray of thread %d is sorted incorrectly\n", MYTHREAD);
-    }
-    upc_barrier;
-
-    
     czas = upc_ticks_to_ns(czas_stop - czas_start)/1000000.0;
     if (MYTHREAD == 0) 
-        printf("Elapsed time for main calculation in milliseconds:\n");
+        printf("Czas wykonania w milisekundach:\n");
         fflush(stdout);
-    printf("Thread %d - %f milliseconds\n", MYTHREAD, czas);
+    printf("Wątek %d - %f milisekund\n", MYTHREAD, czas);
 
     return 0;
 }

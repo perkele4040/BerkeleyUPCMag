@@ -1,9 +1,6 @@
-#include <upc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <upc_tick.h>
-
-
 #include <upc_relaxed.h>
 
 #define N 50000
@@ -13,8 +10,6 @@ shared int plecak[2][W + 1];
 shared [1] int wagi[N];
 shared [1] int wartosci[N];
 
-
-
 int main() {
     int i, w;
     if (MYTHREAD == 0) {
@@ -23,12 +18,6 @@ int main() {
             wartosci[i] = rand() % 11;
         }
     }
-
-    if (MYTHREAD == 0) {
-        printf("Parallel 0/1 Knapsack using Berkeley UPC\n");
-        printf("Items: %d, Capacity: %d, Threads: %d\n\n", N, W, THREADS);
-    }
-
     upc_barrier;
 
     upc_tick_t czas_start = upc_ticks_now();
@@ -51,10 +40,10 @@ int main() {
 
     if (MYTHREAD == 0) {
         int result = plecak[(N-1)%2][W];
-        printf("Maximum value in knapsack = %d\n", result);
-        printf("Elapsed time for main calculation in milliseconds:\n");
+        printf("Maksymalna wartosc plecaka = %d\n", result);
+        printf("Czas wykonania w milisekundach:\n");
     }
-    printf("Thread %d - %f milliseconds\n", MYTHREAD, czas);
+    printf("Watek %d - %f milisekund\n", MYTHREAD, czas);
 
     return 0;
 }

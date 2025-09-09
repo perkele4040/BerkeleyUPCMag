@@ -1,4 +1,3 @@
-#include <upc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +8,7 @@
 #define WIDTH 2000
 #define HEIGHT 2980
 #define GAMMA 2.0f
-#define ROZMIAR (2000 * 2980)
+#define ROZMIAR (WIDTH * HEIGHT)
 
 typedef struct
 {
@@ -37,21 +36,20 @@ void otworz_obraz(const char *filename, Piksel **data)
     char header[3];
     if (fscanf(fp, "%2s", header) != 1 || strcmp(header, "P3") != 0)
     {
-        fprintf(stderr, "Unsupported format (only ASCII P3 allowed)\n");
+        fprintf(stderr, "Obraz nie jest formatu PPM P3\n");
         exit(EXIT_FAILURE);
     }
     int file_width, file_height, maxval;
     if (fscanf(fp, "%d %d", &file_width, &file_height) != 2)
     {
-        fprintf(stderr, "Failed to read image dimensions\n");
+        fprintf(stderr, "Brak wymiarow obrazu\n");
         exit(EXIT_FAILURE);
     }
     if (fscanf(fp, "%d", &maxval) != 1)
     {
-        fprintf(stderr, "Failed to read max color value\n");
+        fprintf(stderr, "Brak maksymalnej wartosci koloru\n");
         exit(EXIT_FAILURE);
     }
-    
     *data = malloc(sizeof(Piksel) * file_width * file_height);
     for (size_t i = 0; i < (size_t)(file_width * file_height); i++)
     {
@@ -59,14 +57,13 @@ void otworz_obraz(const char *filename, Piksel **data)
         int ret=fscanf(fp, "%d %d %d", &r, &g, &b);
         if (ret != 3)
         {
-            fprintf(stderr, "Failed to read Piksel data\n");
+            fprintf(stderr, "Brak danych Pikseli\n");
             exit(EXIT_FAILURE);
         }
         (*data)[i].r = (unsigned int)r;
         (*data)[i].g = (unsigned int)g;
         (*data)[i].b = (unsigned int)b;
     }
-    
     fclose(fp);
 }
 
@@ -90,6 +87,8 @@ int main()
 {
     char plik_wej[] = "mona-lisa-p3.ppm";
     char plik_wyj[] = "mona-lisa-corrected.ppm";
+    upc_tick_t czas_start, czas_stop;
+    double czas;
 
     if (MYTHREAD == 0) {
         Piksel *obraz_lokalny;
@@ -97,27 +96,20 @@ int main()
         upc_memput(obraz, obraz_lokalny, ROZMIAR * sizeof(Piksel));
         free(obraz_lokalny);
     }
-    
     upc_barrier;
-    upc_tick_t czas_start = upc_ticks_now();
 
-
+    czas_start = upc_ticks_now();
     upc_forall(int i = 0; i<ROZMIAR; i++; i)
         obraz[i] = korekcja_gamma(obraz[i]);
+    czas_stop = upc_ticks_now();
 
-
-        
-    upc_tick_t czas_stop = upc_ticks_now();
-    double time_elapsed = upc_ticks_to_ns(czas_stop - czas_start)/1000000.0;
-
-
+    czas = upc_ticks_to_ns(czas_stop - czas_start)/1000000.0;
     if(MYTHREAD==0) 
-        printf("Elapsed time for main calculation in milliseconds:\n");
-    printf("Thread %d - %f milliseconds\n", MYTHREAD, time_elapsed);
+        printf("Czas wykonania w milisekundach:\n");
+    printf("Watek %d - %f milisekund\n", MYTHREAD, czas);
 
+    upc_barrier;
     if (MYTHREAD == 0) 
         zapisz_obraz(plik_wyj, obraz);
-    upc_free(obraz);
-
     return 0;
 }

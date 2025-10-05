@@ -29,9 +29,8 @@ int main() {
                 int include = wartosci[i] + plecak[p][w - wagi[i]];
                 int exclude = plecak[p][w];
                 plecak[c][w] = (include > exclude) ? include : exclude;
-            } else {
+            } else 
                 plecak[c][w] = plecak[p][w];
-            }
         }
         upc_barrier;
     }
